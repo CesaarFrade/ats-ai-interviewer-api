@@ -1,0 +1,27 @@
+{
+  "info": {
+    "_postman_id": "eb02e382-3879-45e3-aa84-95f914775225",
+    "name": "Pruebas ats-ai",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "51539043",
+    "_collection_link": "https://go.postman.co/collection/51539043-eb02e382-3879-45e3-aa84-95f914775225?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Post Oferta",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ]
+}
