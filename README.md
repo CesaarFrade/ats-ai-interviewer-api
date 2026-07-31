@@ -21,6 +21,7 @@ Desarrollado para demostrar habilidades en la integración de flujos de negocio 
 
 ## 🚀 Cómo ejecutarlo en local
 *(Aquí pondremos los comandos de Docker y Maven/Gradle para que cualquiera pueda correr tu app con 2 clicks).*
+En la carpeta /postman encontrarás la colección lista para importar y probar los endpoints localmente
 
 ## 📡 Endpoints Principales
 *(Aquí listaremos 3 o 4 endpoints clave o un enlace a Swagger cuando lo configuremos).*
