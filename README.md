@@ -6,9 +6,9 @@ Un Sistema de Seguimiento de Candidatos (ATS) potenciado por Inteligencia Artifi
 Desarrollado para demostrar habilidades en la integración de flujos de negocio tradicionales con capacidades de IA generativa, aplicando buenas prácticas de desarrollo y arquitectura.
 
 ## ⚙️ Stack Tecnológico
-* **Core:** Java 21, Spring Boot 3
+* **Core:** Java 17, Spring Boot 3
 * **Base de Datos:** PostgreSQL
-* **IA / Agentes:** Spring AI / LangChain4j (LLM: OpenAI/Claude)
+* **IA / Agentes:** Spring AI / LangChain4j (LLM: GeminiAI)
 * **Arquitectura:** Arquitectura Hexagonal (Puertos y Adaptadores)
 * **Infraestructura:** Docker, Docker Compose
 
@@ -20,7 +20,7 @@ Desarrollado para demostrar habilidades en la integración de flujos de negocio 
 3. Si el *match* es > 70%, un Agente IA entrevista al candidato vía chat.
 
 ## 🚀 Cómo ejecutarlo en local
-*(Aquí pondremos los comandos de Docker y Maven/Gradle para que cualquiera pueda correr tu app con 2 clicks).*
+*(Aquí pondremos los comandos de Docker y Maven/Gradle para que cualquiera pueda correr la app con 2 clicks).*
 En la carpeta /postman encontrarás la colección lista para importar y probar los endpoints localmente
 
 ## 📡 Endpoints Principales
