@@ -1,13 +1,14 @@
 package com.cesarfrade.ats.service;
 
-import com.cesarfrade.ats.model.Postulacion;
+import com.cesarfrade.ats.dto.PostulacionRequestDTO;
+import com.cesarfrade.ats.dto.PostulacionResponseDTO;
 
 import java.util.List;
 
 public interface IPostulacionService {
-    public Postulacion findPostulacion(Long id_Postulacion);
-    public List<Postulacion> getPostulaciones();
-    public void savePostulacion(Postulacion cv);
+    public PostulacionResponseDTO findPostulacion(Long id_Postulacion);
+    public List<PostulacionResponseDTO> getPostulaciones();
+    public void savePostulacion(PostulacionRequestDTO postulacion);
     public void deletePostulacion(Long id_postulacion);
-    public void editPostulacion(Postulacion postulacion, Long id_postulacion);
+    public void editPostulacion(PostulacionRequestDTO postulacion, Long id_postulacion);
 }

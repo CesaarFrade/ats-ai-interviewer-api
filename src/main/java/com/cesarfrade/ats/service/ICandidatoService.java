@@ -1,13 +1,14 @@
 package com.cesarfrade.ats.service;
 
-import com.cesarfrade.ats.model.Candidato;
+import com.cesarfrade.ats.dto.CandidatoRequestDTO;
+import com.cesarfrade.ats.dto.CandidatoResponseDTO;
 
 import java.util.List;
 
 public interface ICandidatoService {
-    public Candidato findCandidato(Long id_candidato);
-    public List<Candidato> getCandidatos();
-    public void saveCandidato(Candidato candidato);
+    public CandidatoResponseDTO findCandidato(Long id_candidato);
+    public List<CandidatoResponseDTO> getCandidatos();
+    public void saveCandidato(CandidatoRequestDTO candidato);
     public void deleteCandidato(Long id_candidato);
-    public void editCandidato(Candidato candidato, Long id_candidato);
+    public void editCandidato(CandidatoRequestDTO candidato, Long id_candidato);
 }

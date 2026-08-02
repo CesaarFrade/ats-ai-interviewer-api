@@ -1,8 +1,12 @@
 package com.cesarfrade.ats.service;
 
+import com.cesarfrade.ats.dto.CVRequestDTO;
+import com.cesarfrade.ats.dto.CVResponseDTO;
 import com.cesarfrade.ats.exception.NotFoundException;
 import com.cesarfrade.ats.model.CV;
+import com.cesarfrade.ats.model.Candidato;
 import com.cesarfrade.ats.repository.CVRepository;
+import com.cesarfrade.ats.repository.CandidatoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -12,13 +16,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CVService implements ICVService {
     private final CVRepository cvRepo;
+    private final CandidatoRepository candRepo;
 
     //Métodos CRUD
     @Override
-    public CV findCV(Long id_CV) {
+    public CVResponseDTO findCV(Long id_CV) {
         CV cv = cvRepo.findById(id_CV).orElse(null);
         if (cv != null) {
-            return cv;
+            return mapToResponse(cv);
         } else {
             throw new NotFoundException("Por el momento, no existe ningún currículum"
                     + "con el id indicado");
@@ -26,12 +31,24 @@ public class CVService implements ICVService {
     }
 
     @Override
-    public List<CV> getCVs() {
-        return cvRepo.findAll();
+    public List<CVResponseDTO> getCVs() {
+        return cvRepo.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Override
-    public void saveCV(CV cv) {
+    public void saveCV(CVRequestDTO cvDTO) {
+        Candidato candidato = candRepo.findById(cvDTO.getCandidatoId()).orElse(null);
+        if (candidato == null) {
+            throw new NotFoundException("Por el momento, no existe ningún candidato"
+                    + "con el id indicado");
+        }
+        CV cv = CV.builder()
+                .candidato(candidato)
+                .ruta_archivo_S3(cvDTO.getRutaArchivoS3())
+                .texto_crudo(cvDTO.getTextoCrudo())
+                .build();
         cvRepo.save(cv);
     }
 
@@ -46,22 +63,36 @@ public class CVService implements ICVService {
     }
 
     @Override
-    public void editCV(CV cv, Long id_cv) {
+    public void editCV(CVRequestDTO cvDTO, Long id_cv) {
         CV cvInicial = cvRepo.findById(id_cv).orElse(null);
         if (cvInicial == null) {
             throw new NotFoundException("Por el momento, no existe ningún currículum"
                     + "con el id indicado");
         } else {
-            if (cv.getCandidato() != null) {
-                cvInicial.setCandidato(cv.getCandidato());
+            if (cvDTO.getCandidatoId() != null) {
+                Candidato candidato = candRepo.findById(cvDTO.getCandidatoId()).orElse(null);
+                if (candidato == null) {
+                    throw new NotFoundException("Por el momento, no existe ningún candidato"
+                            + "con el id indicado");
+                }
+                cvInicial.setCandidato(candidato);
             }
-            if (cv.getRuta_archivo_S3() != null) {
-                cvInicial.setRuta_archivo_S3(cv.getRuta_archivo_S3());
+            if (cvDTO.getRutaArchivoS3() != null) {
+                cvInicial.setRuta_archivo_S3(cvDTO.getRutaArchivoS3());
             }
-            if (cv.getTexto_crudo() != null) {
-                cvInicial.setTexto_crudo(cv.getTexto_crudo());
+            if (cvDTO.getTextoCrudo() != null) {
+                cvInicial.setTexto_crudo(cvDTO.getTextoCrudo());
             }
             cvRepo.save(cvInicial);
         }
+    }
+
+    private CVResponseDTO mapToResponse(CV cv) {
+        return CVResponseDTO.builder()
+                .id(cv.getId())
+                .candidatoId(cv.getCandidato() != null ? cv.getCandidato().getId() : null)
+                .rutaArchivoS3(cv.getRuta_archivo_S3())
+                .textoCrudo(cv.getTexto_crudo())
+                .build();
     }
 }

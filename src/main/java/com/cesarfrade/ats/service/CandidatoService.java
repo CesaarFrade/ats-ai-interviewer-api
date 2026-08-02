@@ -1,5 +1,7 @@
 package com.cesarfrade.ats.service;
 
+import com.cesarfrade.ats.dto.CandidatoRequestDTO;
+import com.cesarfrade.ats.dto.CandidatoResponseDTO;
 import com.cesarfrade.ats.exception.NotFoundException;
 import com.cesarfrade.ats.model.Candidato;
 import com.cesarfrade.ats.repository.CandidatoRepository;
@@ -15,10 +17,10 @@ public class CandidatoService implements ICandidatoService {
 
     //Métodos CRUD
     @Override
-    public Candidato findCandidato(Long id_candidato) {
+    public CandidatoResponseDTO findCandidato(Long id_candidato) {
         Candidato candidato = candRepo.findById(id_candidato).orElse(null);
         if (candidato != null) {
-            return candidato;
+            return mapToResponse(candidato);
         } else {
             throw new NotFoundException("Por el momento, no existe ningún candidato"
                     + "con el id indicado");
@@ -26,12 +28,19 @@ public class CandidatoService implements ICandidatoService {
     }
 
     @Override
-    public List<Candidato> getCandidatos() {
-        return candRepo.findAll();
+    public List<CandidatoResponseDTO> getCandidatos() {
+        return candRepo.findAll().stream()
+                .map(this::mapToResponse)
+                .toList();
     }
 
     @Override
-    public void saveCandidato(Candidato candidato) {
+    public void saveCandidato(CandidatoRequestDTO candidatoDTO) {
+        Candidato candidato = Candidato.builder()
+                .nombreCandidato(candidatoDTO.getNombreCandidato())
+                .email(candidatoDTO.getEmail())
+                .telefono(candidatoDTO.getTelefono())
+                .build();
         candRepo.save(candidato);
     }
 
@@ -46,25 +55,32 @@ public class CandidatoService implements ICandidatoService {
     }
 
     @Override
-    public void editCandidato(Candidato candidato, Long id_candidato) {
+    public void editCandidato(CandidatoRequestDTO candidatoDTO, Long id_candidato) {
         Candidato candidatoInicial = candRepo.findById(id_candidato).orElse(null);
         if (candidatoInicial == null) {
             throw new NotFoundException("Por el momento, no existe ningún candidato"
                     + "con el id indicado");
         } else {
-            if (candidato.getNombreCandidato() != null) {
-                candidatoInicial.setNombreCandidato(candidato.getNombreCandidato());
+            if (candidatoDTO.getNombreCandidato() != null) {
+                candidatoInicial.setNombreCandidato(candidatoDTO.getNombreCandidato());
             }
-            if (candidato.getEmail() != null) {
-                candidatoInicial.setEmail(candidato.getEmail());
+            if (candidatoDTO.getEmail() != null) {
+                candidatoInicial.setEmail(candidatoDTO.getEmail());
             }
-            if (candidato.getTelefono() != null) {
-                candidatoInicial.setTelefono(candidato.getTelefono());
-            }
-            if (candidato.getFechaRegistro() != null) {
-                candidatoInicial.setFechaRegistro(candidato.getFechaRegistro());
+            if (candidatoDTO.getTelefono() != null) {
+                candidatoInicial.setTelefono(candidatoDTO.getTelefono());
             }
             candRepo.save(candidatoInicial);
         }
+    }
+
+    private CandidatoResponseDTO mapToResponse(Candidato candidato) {
+        return CandidatoResponseDTO.builder()
+                .id(candidato.getId())
+                .nombreCandidato(candidato.getNombreCandidato())
+                .email(candidato.getEmail())
+                .telefono(candidato.getTelefono())
+                .fechaRegistro(candidato.getFechaRegistro())
+                .build();
     }
 }
