@@ -16,7 +16,105 @@
       "response": []
     },
     {
-      "name": "New Request",
+      "name": "Get Ofertas",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Post Candidato",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"nombreCandidato\": \"Elena García\",\r\n  \"email\": \"elena.garcia@email.com\",\r\n  \"telefono\": \"+34600123456\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/candidatos",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "candidatos"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Candidatos",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Post CVS",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Get CVs",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Post Postulaciones",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n  \"candidato\": {\r\n    \"id\": 1\r\n  },\r\n  \"oferta\": {\r\n    \"id\": 1\r\n  }\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/postulaciones",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "postulaciones"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Postulaciones",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "Delete Postulacion",
       "request": {
         "method": "GET",
         "header": []

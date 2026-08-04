@@ -29,4 +29,22 @@ public class PostulacionController {
     public ResponseEntity<List<PostulacionResponseDTO>> obtenerTodas() {
         return new ResponseEntity<>(postulacionService.getPostulaciones(), HttpStatus.OK);
     }
+
+    @GetMapping("/empresa/ofertas/{ofertaId}/candidatos")
+    public ResponseEntity<List<PostulacionResponseDTO>> obtenerCandidatosFiltrados(
+            @PathVariable Long ofertaId,
+            @RequestParam(defaultValue = "0.0") Double minMatch
+    ) {
+        // Usamos el nombre del método del Servicio y quitamos el paréntesis extra
+        List<PostulacionResponseDTO> lista = postulacionService.getPostulacionesParaEmpresa(ofertaId, minMatch);
+        return new ResponseEntity<>(lista, HttpStatus.OK);
+    }
+
+    // DELETE: http://localhost:8080/api/postulaciones/1
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> eliminarPostulacion(@PathVariable Long id) {
+        postulacionService.deletePostulacion(id);
+        return new ResponseEntity<>("¡Postulación eliminada con éxito de la base de datos!", HttpStatus.OK);
+    }
 }
+

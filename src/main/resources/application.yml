@@ -10,3 +10,8 @@ spring:
     properties:
       hibernate:
         format_sql: true
+# Configuración de Inteligencia Artificial (Gemini)
+gemini:
+  api:
+    key: "AIzaSyCtFUltfN3qCUp9xJTKMCS1pkLHRycF5Fw"
+    url: "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
