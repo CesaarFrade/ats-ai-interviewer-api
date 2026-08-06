@@ -7,10 +7,11 @@ Desarrollado para demostrar habilidades en la integración de flujos de negocio 
 
 ## ⚙️ Stack Tecnológico
 * **Core:** Java 17, Spring Boot 3
-* **Base de Datos:** PostgreSQL
-* **IA / Agentes:** Spring AI / LangChain4j (LLM: GeminiAI)
-* **Arquitectura:** Arquitectura Hexagonal (Puertos y Adaptadores)
-* **Infraestructura:** Docker, Docker Compose
+* **Base de Datos:** PostgreSQL / H2
+* **IA / Agentes:** API de Google Gemini (gemini-2.5-flash)
+* **Procesamiento de Archivos:** Apache PDFBox (Extracción de texto)
+* **Arquitectura:** Arquitectura Hexagonal / Multicapa
+* **Documentación:** Swagger / OpenAPI 3
 
 ## 🏗️ Arquitectura y Flujo
 *(Aquí añadiremos un diagrama usando Mermaid.js cuando tengamos claro el diseño).*
@@ -19,9 +20,20 @@ Desarrollado para demostrar habilidades en la integración de flujos de negocio 
 2. El sistema extrae texto y evalúa el perfil contra la oferta.
 3. Si el *match* es > 70%, un Agente IA entrevista al candidato vía chat.
 
+## 🔑 Variables de Entorno
+Antes de ejecutar el proyecto, asegúrate de configurar las siguientes variables de entorno en tu sistema o IDE para proteger las credenciales:
+* `GEMINI_API_KEY`: Tu clave privada generada en Google AI Studio.
+
 ## 🚀 Cómo ejecutarlo en local
-*(Aquí pondremos los comandos de Docker y Maven/Gradle para que cualquiera pueda correr la app con 2 clicks).*
-En la carpeta /postman encontrarás la colección lista para importar y probar los endpoints localmente
+1. Clona este repositorio.
+2. Configura tu `GEMINI_API_KEY` en las variables de entorno de tu IDE.
+3. Ejecuta la aplicación Spring Boot desde la clase `AtsApiApplication`.
+4. (Opcional) En la carpeta `/postman` encontrarás la colección para importar, aunque recomendamos usar Swagger.
+
+🔗 **[Swagger UI - Interactiva](http://localhost:8080/swagger-ui/index.h
 
 ## 📡 Endpoints Principales
-*(Aquí listaremos 3 o 4 endpoints clave o un enlace a Swagger cuando lo configuremos).*
+**Endpoints Clave:**
+* `POST /api/cvs/upload` - Sube un archivo PDF y extrae su texto en memoria.
+* `POST /api/postulaciones` - Conecta al candidato con la oferta y dispara el análisis de la IA de Google.
+* `GET /api/postulaciones/empresa/ofertas/{ofertaId}/candidatos` - Filtro avanzado de RRHH para obtener candidatos que superen cierta nota de compatibilidad.
