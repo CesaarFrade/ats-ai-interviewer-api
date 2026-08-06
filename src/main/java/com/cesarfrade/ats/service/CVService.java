@@ -9,6 +9,7 @@ import com.cesarfrade.ats.repository.CVRepository;
 import com.cesarfrade.ats.repository.CandidatoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,6 +18,7 @@ import java.util.List;
 public class CVService implements ICVService {
     private final CVRepository cvRepo;
     private final CandidatoRepository candRepo;
+    private final PdfExtractorService pdfExtractorService;
 
     //Métodos CRUD
     @Override
@@ -85,6 +87,30 @@ public class CVService implements ICVService {
             }
             cvRepo.save(cvInicial);
         }
+    }
+
+    @Override
+    public String procesarYGuardarPdf(Long candidatoId, MultipartFile archivoPdf) {
+        // 1. Buscamos al candidato
+        Candidato candidato = candRepo.findById(candidatoId).orElse(null);
+        if (candidato == null) {
+            throw new NotFoundException("Por el momento, no existe ningún candidato con el id indicado");
+        }
+
+        // 2. Extraemos el texto usando nuestra maquinaria
+        String textoExtraido = pdfExtractorService.extraerTextoPdf(archivoPdf);
+
+        // 3. Guardamos en base de datos
+        CV nuevoCv = CV.builder()
+                .candidato(candidato)
+                .ruta_archivo_S3(archivoPdf.getOriginalFilename())
+                .texto_crudo(textoExtraido)
+                .build();
+
+        cvRepo.save(nuevoCv);
+
+        // Devolvemos el texto para que el controlador decida qué hacer con él
+        return textoExtraido;
     }
 
     private CVResponseDTO mapToResponse(CV cv) {
