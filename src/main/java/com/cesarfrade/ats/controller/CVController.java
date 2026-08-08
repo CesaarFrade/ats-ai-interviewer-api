@@ -4,6 +4,7 @@ import com.cesarfrade.ats.dto.CVRequestDTO;
 import com.cesarfrade.ats.dto.CVResponseDTO;
 import com.cesarfrade.ats.service.ICVService;
 import com.cesarfrade.ats.service.PdfExtractorService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 @RestController
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/cvs") // La ruta base para todos los métodos de esta clase
 @RequiredArgsConstructor
 public class CVController {

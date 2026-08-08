@@ -3,6 +3,7 @@ package com.cesarfrade.ats.controller;
 import com.cesarfrade.ats.dto.OfertaRequestDTO;
 import com.cesarfrade.ats.dto.OfertaResponseDTO;
 import com.cesarfrade.ats.service.IOfertaService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/ofertas") // La ruta base para todos los métodos de esta clase
 @RequiredArgsConstructor
 public class OfertaController {

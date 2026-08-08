@@ -3,6 +3,7 @@ package com.cesarfrade.ats.controller;
 import com.cesarfrade.ats.dto.PostulacionRequestDTO;
 import com.cesarfrade.ats.dto.PostulacionResponseDTO;
 import com.cesarfrade.ats.service.IPostulacionService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
+@SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/postulaciones") // La ruta base para todos los métodos de esta clase
 @RequiredArgsConstructor
 public class PostulacionController {
