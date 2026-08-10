@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,6 +22,7 @@ public class OfertaController {
     private final IOfertaService ofertaService;
 
     // POST: http://localhost:8080/api/ofertas
+    @PreAuthorize("hasRole('EMPRESA')")
     @PostMapping
     public ResponseEntity<String> crearOferta(@Valid @RequestBody OfertaRequestDTO oferta) {
         ofertaService.saveOferta(oferta);

@@ -12,5 +12,5 @@ public interface ICVService {
     public void saveCV(CVRequestDTO cv);
     public void deleteCV(Long id_cv);
     public void editCV(CVRequestDTO cv, Long id_cv);
-    String procesarYGuardarPdf(Long candidatoId, MultipartFile archivoPdf);
+    String procesarYGuardarPdf(String email, MultipartFile archivoPdf);
 }

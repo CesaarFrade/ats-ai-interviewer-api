@@ -2,8 +2,10 @@ package com.cesarfrade.ats.service;
 
 import com.cesarfrade.ats.dto.LoginDTO;
 import com.cesarfrade.ats.dto.RegistroUsuarioDTO;
+import com.cesarfrade.ats.model.Candidato;
 import com.cesarfrade.ats.model.Usuario;
 import com.cesarfrade.ats.security.JwtUtil;
+import com.cesarfrade.ats.security.Rol;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,6 +14,9 @@ import org.springframework.stereotype.Service;
 public class AuthService {
     @Autowired
     private IUsuarioService usuarioService;
+
+    @Autowired
+    private ICandidatoService candidatoService;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -31,8 +36,15 @@ public class AuthService {
                 .rol(dto.getRol())
                 .build();
 
-        // Usamos el servicio
-        return usuarioService.guardarUsuario(nuevoUsuario);
+        Usuario usuarioGuardado = usuarioService.guardarUsuario(nuevoUsuario);
+        if (dto.getRol() == Rol.ROLE_CANDIDATO) {
+            Candidato perfilCandidato = Candidato.builder()
+                    .email(dto.getEmail())
+                    .build();
+            candidatoService.guardarCandidatoInterno(perfilCandidato);
+        }
+
+        return usuarioGuardado;
     }
 
     public String login(LoginDTO dto) {

@@ -90,11 +90,12 @@ public class CVService implements ICVService {
     }
 
     @Override
-    public String procesarYGuardarPdf(Long candidatoId, MultipartFile archivoPdf) {
-        // 1. Buscamos al candidato
-        Candidato candidato = candRepo.findById(candidatoId).orElse(null);
+    public String procesarYGuardarPdf(String email, MultipartFile archivoPdf) {
+        // 1. Buscamos al candidato por su email en lugar de por ID
+        Candidato candidato = candRepo.findByEmail(email).orElse(null);
         if (candidato == null) {
-            throw new NotFoundException("Por el momento, no existe ningún candidato con el id indicado");
+            // Mensaje más claro para el usuario
+            throw new NotFoundException("No se encontró ningún perfil de candidato asociado a este usuario.");
         }
 
         // 2. Extraemos el texto usando nuestra maquinaria

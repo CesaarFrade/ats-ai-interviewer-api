@@ -10,6 +10,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -21,7 +24,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CVController {
     private final ICVService cvService;
-    private final PdfExtractorService pdfExtractorService;
 
     // POST: http://localhost:8080/api/cvs
     @PostMapping
@@ -36,13 +38,17 @@ public class CVController {
         return new ResponseEntity<>(cvService.getCVs(), HttpStatus.OK);
     }
 
+    @PreAuthorize("hasRole('CANDIDATO')")
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<String> subirCVReal(
-            @RequestParam("candidatoId") Long candidatoId,
-            @RequestParam("archivoPdf") MultipartFile archivoPdf
+            @RequestParam("archivoPdf") MultipartFile archivoPdf,
+            @AuthenticationPrincipal UserDetails userDetails
     ) {
+        // Obtenemos el email del usuario de forma 100% segura (nadie puede falsificarlo)
+        String email = userDetails.getUsername();
+
         // El servicio hace todo el trabajo y nos devuelve el texto
-        String textoExtraido = cvService.procesarYGuardarPdf(candidatoId, archivoPdf);
+        String textoExtraido = cvService.procesarYGuardarPdf(email, archivoPdf);
 
         // Formateamos una respuesta amigable
         String preview = textoExtraido.substring(0, Math.min(textoExtraido.length(), 100));

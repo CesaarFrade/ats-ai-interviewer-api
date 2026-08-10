@@ -45,6 +45,11 @@ public class CandidatoService implements ICandidatoService {
     }
 
     @Override
+    public Candidato guardarCandidatoInterno(Candidato candidato) {
+        return candRepo.save(candidato); // o candRepo.save(...) dependiendo de cómo lo llames
+    }
+
+    @Override
     public void deleteCandidato(Long id_candidato) {
         if (candRepo.existsById(id_candidato)) {
             candRepo.deleteById(id_candidato);
