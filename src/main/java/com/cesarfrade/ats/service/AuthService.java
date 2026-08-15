@@ -25,11 +25,11 @@ public class AuthService {
     private JwtUtil jwtUtil;
 
     public Usuario registrarUsuario(RegistroUsuarioDTO dto) {
-        // Usamos el servicio
         if (usuarioService.existePorEmail(dto.getEmail())) {
             throw new RuntimeException("El email ya está registrado");
         }
 
+        // 1. Guardamos el usuario de seguridad
         Usuario nuevoUsuario = Usuario.builder()
                 .email(dto.getEmail())
                 .password(passwordEncoder.encode(dto.getPassword()))
@@ -37,9 +37,13 @@ public class AuthService {
                 .build();
 
         Usuario usuarioGuardado = usuarioService.guardarUsuario(nuevoUsuario);
+
+        // 2. Si es candidato, creamos su perfil completo automáticamente con los datos del formulario
         if (dto.getRol() == Rol.ROLE_CANDIDATO) {
             Candidato perfilCandidato = Candidato.builder()
                     .email(dto.getEmail())
+                    .nombreCandidato(dto.getNombreCandidato()) // <-- ¡Guardamos el nombre!
+                    .telefono(dto.getTelefono())               // <-- ¡Guardamos el teléfono!
                     .build();
             candidatoService.guardarCandidatoInterno(perfilCandidato);
         }

@@ -20,6 +20,7 @@ import java.util.List;
 
 @RestController
 @SecurityRequirement(name = "Bearer Authentication")
+@CrossOrigin(origins = "*")
 @RequestMapping("/api/cvs") // La ruta base para todos los métodos de esta clase
 @RequiredArgsConstructor
 public class CVController {

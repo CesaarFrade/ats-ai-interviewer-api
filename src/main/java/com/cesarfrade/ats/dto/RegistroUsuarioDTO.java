@@ -8,4 +8,6 @@ public class RegistroUsuarioDTO {
     private String email;
     private String password;
     private Rol rol;
+    private String nombreCandidato;
+    private String telefono;
 }

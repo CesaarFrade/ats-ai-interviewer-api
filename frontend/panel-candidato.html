@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS - Mi Panel</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar-custom {
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .upload-area {
+            border: 2px dashed #cbd5e1;
+            border-radius: 1rem;
+            padding: 3rem 2rem;
+            text-align: center;
+            background-color: #ffffff;
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #4f46e5;
+            background-color: #f8faff;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. BARRA DE NAVEGACIÓN -->
+    <nav class="navbar navbar-expand-lg navbar-custom mb-5 py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="#">
+                <i class="bi bi-rocket-takeoff me-2"></i>ATS
+            </a>
+            <div class="d-flex">
+                <span class="navbar-text me-3 d-none d-md-block">
+                    Modo Candidato
+                </span>
+                <button id="btnCerrarSesion" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-box-arrow-right"></i> Salir
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 2. CONTENIDO PRINCIPAL -->
+    <div class="container" style="max-width: 700px;">
+        <h2 class="fw-bold mb-4">Sube tu Currículum</h2>
+        
+        <div class="upload-area mb-4">
+            <i class="bi bi-file-earmark-pdf text-danger" style="font-size: 3rem;"></i>
+            <h5 class="mt-3 fw-bold">Selecciona tu archivo PDF</h5>
+            <p class="text-muted small">Nuestro motor de IA extraerá tu información automáticamente.</p>
+            
+            <form id="uploadForm" class="mt-4">
+                <input class="form-control mb-3" type="file" id="archivoPdf" accept=".pdf" required>
+                <button type="submit" class="btn btn-primary w-100" id="btnSubir">
+                    Procesar CV <i class="bi bi-magic ms-1"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- 3. CAJA PARA MOSTRAR LA RESPUESTA DEL BACKEND -->
+        <div id="resultadoArea" class="alert alert-success d-none shadow-sm" role="alert">
+            <h5 class="alert-heading"><i class="bi bi-check-circle-fill me-2"></i>¡Éxito!</h5>
+            <hr>
+            <p class="mb-0 fw-bold">El servidor ha respondido:</p>
+            <p id="textoRespuesta" class="mt-2 text-dark small" style="white-space: pre-wrap;"></p>
+        </div>
+
+        <!-- 4. SECCIÓN DE OFERTAS DISPONIBLES PARA EL CANDIDATO -->
+        <div class="container mt-5 mb-5" style="max-width: 700px;">
+            <h3 class="fw-bold mb-3">Ofertas de Empleo Disponibles</h3>
+            <p class="text-muted small">Postúlate a las ofertas que encajen contigo para que la IA evalúe tu perfil.</p>
+            
+            <div id="contenedorOfertasCandidato" class="row">
+                <div class="col-12 text-center text-muted py-4">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <p class="small mt-2">Cargando ofertas...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT: La lógica de negocio del Frontend -->
+    <script>
+        // --- 1. SEGURIDAD FRONTEND (El Guardia de la Puerta) ---
+        const token = localStorage.getItem('jwtToken');
+        
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('btnCerrarSesion').addEventListener('click', () => {
+            localStorage.removeItem('jwtToken');
+            window.location.href = 'login.html';
+        });
+
+        // --- 2. LÓGICA DE SUBIDA DE CV ---
+        document.getElementById('uploadForm').addEventListener('submit', async function(evento) {
+            evento.preventDefault();
+            
+            const fileInput = document.getElementById('archivoPdf');
+            const archivo = fileInput.files[0];
+            const btnSubir = document.getElementById('btnSubir');
+            
+            if (!archivo) return;
+
+            const textoOriginal = btnSubir.innerHTML;
+            btnSubir.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Subiendo...';
+            btnSubir.disabled = true;
+
+            const formData = new FormData();
+            formData.append('archivoPdf', archivo);
+
+            try {
+                const respuesta = await fetch('http://localhost:8080/api/cvs/upload', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: formData
+                });
+
+                if (respuesta.ok) {
+                    const textoDelServidor = await respuesta.text();
+                    
+                    document.getElementById('textoRespuesta').innerText = textoDelServidor;
+                    document.getElementById('resultadoArea').classList.remove('d-none');
+                    fileInput.value = '';
+                } else {
+                    alert("Error al subir el CV. Puede que tu sesión haya caducado o no tengas permisos.");
+                    if(respuesta.status === 403 || respuesta.status === 401) {
+                        localStorage.removeItem('jwtToken');
+                        window.location.href = 'login.html';
+                    }
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error de conexión con el servidor.");
+            } finally {
+                btnSubir.innerHTML = textoOriginal;
+                btnSubir.disabled = false;
+            }
+        });
+
+        // --- 3. CARGAR OFERTAS PARA EL CANDIDATO ---
+        async function cargarOfertasParaCandidato() {
+            try {
+                const respuesta = await fetch('http://localhost:8080/api/ofertas', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (respuesta.ok) {
+                    const ofertas = await respuesta.json();
+                    const contenedor = document.getElementById('contenedorOfertasCandidato');
+                    
+                    if (ofertas.length === 0) {
+                        contenedor.innerHTML = `<p class="text-muted text-center">No hay ofertas disponibles en este momento.</p>`;
+                        return;
+                    }
+
+                    contenedor.innerHTML = '';
+                    ofertas.forEach(oferta => {
+                        contenedor.innerHTML += `
+                            <div class="col-12 mb-3">
+                                <div class="card p-3 shadow-sm border-0">
+                                    <h5 class="fw-bold text-primary">${oferta.titulo}</h5>
+                                    <p class="text-muted small mb-2 text-truncate">${oferta.descripcionPuesto}</p>
+                                    <button class="btn btn-sm btn-dark align-self-start" id="btn-postular-${oferta.id}" onclick="postularse(${oferta.id})">
+                                        <i class="bi bi-send-check me-1"></i> Postularme con mi CV
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+            } catch (error) {
+                console.error("Error cargando ofertas:", error);
+            }
+        }
+
+        // --- 4. ACCIÓN REAL DE POSTULACIÓN (OBTIENE EL ID DINÁMICAMENTE Y DISPARA LA IA) ---
+        async function postularse(ofertaId) {
+            const btnPostular = document.getElementById(`btn-postular-${ofertaId}`);
+            const textoBtnOriginal = btnPostular.innerHTML;
+            btnPostular.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Evaluando con IA...';
+            btnPostular.disabled = true;
+
+            try {
+                // 1. Obtenemos de forma dinámica el ID real del candidato logueado usando el token
+                const respuestaPerfil = await fetch('http://localhost:8080/api/candidatos/me', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (!respuestaPerfil.ok) {
+                    throw new Error("No se pudo obtener el perfil del candidato actual.");
+                }
+
+                const candidatoData = await respuestaPerfil.json();
+                const candidatoIdReal = candidatoData.id;
+
+                // 2. Enviamos la postulación con el ID real obtenido
+                const respuesta = await fetch('http://localhost:8080/api/postulaciones', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({
+                        candidatoId: candidatoIdReal,
+                        ofertaId: ofertaId
+                    })
+                });
+
+                if (respuesta.ok) {
+                    const mensaje = await respuesta.text();
+                    alert("¡Postulación enviada con éxito! La IA de Gemini ha evaluado tu perfil y guardado el match.\n\n" + mensaje);
+                } else {
+                    alert("Error al postularse. Asegúrate de haber subido tu CV previamente en este panel.");
+                }
+            } catch (error) {
+                console.error("Error en la postulación:", error);
+                alert("Error de conexión al intentar postularse.");
+            } finally {
+                btnPostular.innerHTML = textoBtnOriginal;
+                btnPostular.disabled = false;
+            }
+        }
+
+        // Ejecutamos la carga al abrir el panel
+        cargarOfertasParaCandidato();
+    </script>
+</body>
+</html>

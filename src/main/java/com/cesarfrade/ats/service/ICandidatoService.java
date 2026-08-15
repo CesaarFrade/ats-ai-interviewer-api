@@ -13,4 +13,5 @@ public interface ICandidatoService {
     public void saveCandidato(CandidatoRequestDTO candidato);
     public void deleteCandidato(Long id_candidato);
     public void editCandidato(CandidatoRequestDTO candidato, Long id_candidato);
+    CandidatoResponseDTO findByEmail(String email);
 }

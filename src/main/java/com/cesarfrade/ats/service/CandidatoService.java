@@ -88,4 +88,11 @@ public class CandidatoService implements ICandidatoService {
                 .fechaRegistro(candidato.getFechaRegistro())
                 .build();
     }
+
+    @Override
+    public CandidatoResponseDTO findByEmail(String email) {
+        Candidato candidato = candRepo.findByEmail(email)
+                .orElseThrow(() -> new NotFoundException("No existe ningún candidato con el email indicado: " + email));
+        return mapToResponse(candidato);
+    }
 }

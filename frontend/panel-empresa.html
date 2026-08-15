@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS - Panel de Empresa</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar-custom {
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .oferta-card {
+            border: none;
+            border-radius: 1rem;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04);
+        }
+        .oferta-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA DE NAVEGACIÓN -->
+    <nav class="navbar navbar-expand-lg navbar-custom mb-5 py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="#">
+                <i class="bi bi-building me-2"></i>ATS
+            </a>
+            <div class="d-flex align-items-center">
+                <span class="navbar-text me-4 d-none d-md-block fw-semibold text-dark">
+                    Modo Empresa
+                </span>
+                <button id="btnCerrarSesion" class="btn btn-outline-danger btn-sm">
+                    <i class="bi bi-box-arrow-right"></i> Salir
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="container">
+        
+        <!-- Cabecera de la sección -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2 class="fw-bold m-0">Ofertas de Trabajo</h2>
+            <!-- Botón que abre la ventana flotante (Modal) -->
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearOferta">
+                <i class="bi bi-plus-lg me-1"></i> Nueva Oferta
+            </button>
+        </div>
+
+        <!-- Contenedor donde JavaScript inyectará las tarjetas de las ofertas -->
+        <div class="row" id="contenedorOfertas">
+            <div class="col-12 text-center text-muted py-5" id="cargandoOfertas">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <p>Cargando ofertas...</p>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL (Ventana flotante) PARA CREAR OFERTA -->
+    <div class="modal fade" id="modalCrearOferta" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow">
+                <div class="modal-header bg-primary text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="bi bi-briefcase me-2"></i>Publicar Nueva Oferta</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <form id="formCrearOferta">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Título del puesto</label>
+                            <input type="text" class="form-control" id="tituloOferta" placeholder="Ej: Desarrollador Java Senior" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Descripción y Requisitos</label>
+                            <textarea class="form-control" id="descOferta" rows="4" placeholder="Detalla qué buscas..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 mt-2" id="btnGuardarOferta">
+                            Publicar Oferta
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Bootstrap (Necesarios para que el Modal funcione) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- JAVASCRIPT: Lógica de negocio -->
+    <script>
+        const token = localStorage.getItem('jwtToken');
+        
+        // 1. Seguridad básica
+        if (!token) {
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('btnCerrarSesion').addEventListener('click', () => {
+            localStorage.removeItem('jwtToken');
+            window.location.href = 'login.html';
+        });
+
+        // 2. Función para Cargar Ofertas al entrar a la página
+        async function cargarOfertas() {
+            try {
+                const respuesta = await fetch('http://localhost:8080/api/ofertas', {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (respuesta.status === 403) {
+                    alert("¡Oye! No tienes permisos de Empresa para ver esto.");
+                    window.location.href = 'login.html';
+                    return;
+                }
+
+                if (respuesta.ok) {
+                    const ofertas = await respuesta.json();
+                    const contenedor = document.getElementById('contenedorOfertas');
+                    
+                    if (ofertas.length === 0) {
+                        contenedor.innerHTML = `
+                            <div class="col-12 text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-1"></i>
+                                <p class="mt-2">Aún no hay ofertas publicadas.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    // Limpiamos el texto de "Cargando..."
+                    contenedor.innerHTML = '';
+
+                    // Dibujamos una tarjeta por cada oferta
+                    ofertas.forEach(oferta => {
+                        const tarjetaHTML = `
+                            <div class="col-md-6 col-lg-4 mb-4">
+                                <div class="card oferta-card h-100 p-3">
+                                    <div class="card-body">
+                                        <h5 class="card-title fw-bold text-dark">${oferta.titulo || 'Sin título'}</h5>
+                                        <p class="card-text text-muted small mt-3 text-truncate" style="max-height: 4.5em; overflow: hidden;">
+                                            ${oferta.descripcionPuesto || 'Sin descripción'}
+                                        </p>
+                                    </div>
+                                    <div class="card-footer bg-transparent border-0 pt-0">
+                                        <button class="btn btn-sm btn-outline-primary w-100" onclick="verCandidatos(${oferta.id})">
+                                            <i class="bi bi-people me-1"></i> Ver Candidatos & IA
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        contenedor.innerHTML += tarjetaHTML;
+                    });
+                }
+            } catch (error) {
+                console.error("Error al cargar ofertas:", error);
+                document.getElementById('contenedorOfertas').innerHTML = `<p class="text-danger text-center">Error conectando con el servidor.</p>`;
+            }
+        }
+
+        // 3. Función para consultar los candidatos evaluados por la IA de esta oferta
+        async function verCandidatos(ofertaId) {
+            try {
+                const respuesta = await fetch(`http://localhost:8080/api/postulaciones/empresa/ofertas/${ofertaId}/candidatos`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (respuesta.ok) {
+                    const postulaciones = await respuesta.json();
+                    
+                    if (postulaciones.length === 0) {
+                        alert("Aún no hay candidatos postulados para esta oferta.");
+                        return;
+                    }
+
+                    // Construimos un reporte visual rápido con los datos de la IA
+                    let mensajeReporte = "--- RANKING DE CANDIDATOS (IA) ---\n\n";
+                    postulaciones.forEach((p, index) => {
+                        mensajeReporte += `${index + 1}. Candidato ID: ${p.candidatoId}\n`;
+                        mensajeReporte += `   ⭐ Compatibilidad (Match): ${p.porcentajeMatch}%\n`;
+                        mensajeReporte += `   📝 Resumen IA: ${p.resumenIa}\n\n`;
+                    });
+
+                    alert(mensajeReporte);
+                } else {
+                    alert("Error al obtener los candidatos.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error de conexión con el servidor.");
+            }
+        }
+
+        // 4. Lógica para Crear una nueva Oferta
+        document.getElementById('formCrearOferta').addEventListener('submit', async function(evento) {
+            evento.preventDefault();
+            
+            const btn = document.getElementById('btnGuardarOferta');
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
+            btn.disabled = true;
+
+            const titulo = document.getElementById('tituloOferta').value;
+            const descripcion = document.getElementById('descOferta').value;
+
+            try {
+                const respuesta = await fetch('http://localhost:8080/api/ofertas', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: JSON.stringify({ 
+                        titulo: titulo, 
+                        descripcionPuesto: descripcion,
+                        activa: true
+                    })
+                });
+
+                if (respuesta.ok) {
+                    // Cerramos el modal de Bootstrap
+                    const modalEl = document.getElementById('modalCrearOferta');
+                    const modal = bootstrap.Modal.getInstance(modalEl);
+                    modal.hide();
+
+                    // Limpiamos el formulario y recargamos la lista
+                    this.reset();
+                    cargarOfertas();
+                } else {
+                    alert("Error al crear la oferta. Verifica que tengas permisos (ROLE_EMPRESA).");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error de conexión al guardar.");
+            } finally {
+                btn.innerHTML = 'Publicar Oferta';
+                btn.disabled = false;
+            }
+        });
+
+        // ¡Arrancamos la carga al iniciar la página!
+        cargarOfertas();
+    </script>
+</body>
+</html>

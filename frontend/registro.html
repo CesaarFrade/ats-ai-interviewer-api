@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS - Crear Cuenta</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .login-card {
+            border: none;
+            border-radius: 1.5rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .btn-primary {
+            background-color: #4f46e5;
+            border: none;
+            padding: 0.8rem;
+            border-radius: 0.75rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        }
+        .form-control, .form-select {
+            border-radius: 0.75rem;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: #4f46e5;
+            box-shadow: 0 0 0 0.25rem rgba(79, 70, 229, 0.25);
+        }
+        .brand-icon {
+            font-size: 3rem;
+            color: #4f46e5;
+        }
+        .enlace-registro {
+            color: #4f46e5;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body class="d-flex align-items-center justify-content-center min-vh-100 py-4">
+
+    <div class="card login-card p-4 p-md-5" style="width: 100%; max-width: 450px;">
+        
+        <div class="text-center mb-4">
+            <i class="bi bi-person-plus brand-icon"></i>
+            <h3 class="fw-bold mt-2">Crear Cuenta</h3>
+            <p class="text-muted small">Únete al ATS inteligente</p>
+        </div>
+        
+        <div id="mensajeExito" class="alert alert-success d-none border-0 shadow-sm" role="alert">
+            <i class="bi bi-check-circle-fill me-2"></i> ¡Cuenta creada! Redirigiendo al login...
+        </div>
+        <div id="mensajeError" class="alert alert-danger d-none border-0 shadow-sm" role="alert">
+            <i class="bi bi-exclamation-circle-fill me-2"></i> Error al registrar. ¿El email ya existe?
+        </div>
+
+        <form id="registroForm">
+            
+            <!-- Selector de Rol PRIMERO para saber qué mostrar -->
+            <div class="mb-3">
+                <label class="form-label text-muted small mb-2 fw-semibold">Tipo de cuenta</label>
+                <select class="form-select" id="rol" required onchange="cambiarRol()">
+                    <option value="ROLE_CANDIDATO" selected>Busco empleo (Candidato)</option>
+                    <option value="ROLE_EMPRESA">Busco talento (Empresa)</option>
+                </select>
+            </div>
+
+            <!-- Campos Extra para Candidatos (Se ocultan si es Empresa) -->
+            <div id="camposCandidato">
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="nombreCandidato" placeholder="Nombre completo">
+                    <label for="nombreCandidato text-muted">Nombre y Apellidos</label>
+                </div>
+                <div class="form-floating mb-3">
+                    <input type="text" class="form-control" id="telefono" placeholder="Teléfono">
+                    <label for="telefono text-muted">Teléfono de contacto</label>
+                </div>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="email" class="form-control" id="email" placeholder="ejemplo@tech.com" required>
+                <label for="email text-muted">Correo electrónico</label>
+            </div>
+            
+            <div class="form-floating mb-4">
+                <input type="password" class="form-control" id="password" placeholder="Contraseña" required>
+                <label for="password text-muted">Contraseña</label>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100 mb-4">
+                Registrarse <i class="bi bi-arrow-right ms-1"></i>
+            </button>
+            
+            <div class="text-center text-muted">
+                ¿Ya tienes cuenta? <a href="login.html" class="text-decoration-none enlace-registro">Inicia sesión</a>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        // Función para mostrar/ocultar campos de candidato según el rol seleccionado
+        function cambiarRol() {
+            const rol = document.getElementById('rol').value;
+            const camposCandidato = document.getElementById('camposCandidato');
+            const inputNombre = document.getElementById('nombreCandidato');
+            
+            if (rol === 'ROLE_EMPRESA') {
+                camposCandidato.classList.add('d-none');
+                inputNombre.required = false;
+            } else {
+                camposCandidato.classList.remove('d-none');
+                inputNombre.required = true;
+            }
+        }
+
+        document.getElementById('registroForm').addEventListener('submit', async function(evento) {
+            evento.preventDefault(); 
+            
+            const btnSubmit = this.querySelector('button[type="submit"]');
+            const textoOriginal = btnSubmit.innerHTML;
+            btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Creando...';
+            btnSubmit.disabled = true;
+
+            const emailForm = document.getElementById('email').value;
+            const passwordForm = document.getElementById('password').value;
+            const rolForm = document.getElementById('rol').value;
+            const nombreForm = document.getElementById('nombreCandidato').value;
+            const telefonoForm = document.getElementById('telefono').value;
+            
+            document.getElementById('mensajeError').classList.add('d-none');
+            document.getElementById('mensajeExito').classList.add('d-none');
+
+            try {
+                const respuesta = await fetch('http://localhost:8080/api/auth/registro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        email: emailForm, 
+                        password: passwordForm,
+                        rol: rolForm,
+                        nombreCandidato: rolForm === 'ROLE_CANDIDATO' ? nombreForm : null,
+                        telefono: rolForm === 'ROLE_CANDIDATO' ? telefonoForm : null
+                    })
+                });
+
+                if (respuesta.ok) {
+                    document.getElementById('mensajeExito').classList.remove('d-none');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                } else {
+                    document.getElementById('mensajeError').classList.remove('d-none');
+                    btnSubmit.innerHTML = textoOriginal;
+                    btnSubmit.disabled = false;
+                }
+            } catch (error) {
+                console.error("Error conectando con el servidor:", error);
+                alert("No se pudo conectar con el servidor.");
+                btnSubmit.innerHTML = textoOriginal;
+                btnSubmit.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

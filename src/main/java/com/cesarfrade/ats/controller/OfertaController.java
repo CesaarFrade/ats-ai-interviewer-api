@@ -17,6 +17,7 @@ import java.util.List;
 @RestController
 @SecurityRequirement(name = "Bearer Authentication")
 @RequestMapping("/api/ofertas") // La ruta base para todos los métodos de esta clase
+@CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 public class OfertaController {
     private final IOfertaService ofertaService;
