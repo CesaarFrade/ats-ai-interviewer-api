@@ -28,6 +28,10 @@
             transform: translateY(-5px);
             box-shadow: 0 10px 15px rgba(0,0,0,0.1);
         }
+        .badge-match {
+            font-size: 0.9rem;
+            padding: 0.5em 0.75em;
+        }
     </style>
 </head>
 <body>
@@ -35,8 +39,8 @@
     <!-- BARRA DE NAVEGACIÓN -->
     <nav class="navbar navbar-expand-lg navbar-custom mb-5 py-3">
         <div class="container">
-            <a class="navbar-brand fw-bold text-primary" href="#">
-                <i class="bi bi-building me-2"></i>ATS
+            <a class="navbar-brand fw-bold text-primary" href="panel-empresa.html">
+                <i class="bi bi-building me-2"></i>ATS - Empresa
             </a>
             <div class="d-flex align-items-center">
                 <span class="navbar-text me-4 d-none d-md-block fw-semibold text-dark">
@@ -52,26 +56,69 @@
     <!-- CONTENIDO PRINCIPAL -->
     <div class="container">
         
-        <!-- Cabecera de la sección -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2 class="fw-bold m-0">Ofertas de Trabajo</h2>
-            <!-- Botón que abre la ventana flotante (Modal) -->
-            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearOferta">
-                <i class="bi bi-plus-lg me-1"></i> Nueva Oferta
-            </button>
+        <!-- VISTA 1: LISTADO DE OFERTAS -->
+        <div id="seccionOfertas">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="fw-bold m-0">Mis Ofertas de Trabajo</h2>
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalCrearOferta">
+                    <i class="bi bi-plus-lg me-1"></i> Nueva Oferta
+                </button>
+            </div>
+
+            <div class="row" id="contenedorOfertas">
+                <div class="col-12 text-center text-muted py-5">
+                    <div class="spinner-border text-primary mb-3" role="status"></div>
+                    <p>Cargando ofertas...</p>
+                </div>
+            </div>
         </div>
 
-        <!-- Contenedor donde JavaScript inyectará las tarjetas de las ofertas -->
-        <div class="row" id="contenedorOfertas">
-            <div class="col-12 text-center text-muted py-5" id="cargandoOfertas">
-                <div class="spinner-border text-primary mb-3" role="status"></div>
-                <p>Cargando ofertas...</p>
+        <!-- VISTA 2: CANDIDATOS DE UNA OFERTA (Oculta por defecto) -->
+        <div id="seccionCandidatos" class="d-none">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <button class="btn btn-outline-secondary btn-sm mb-2" onclick="volverAOfertas()">
+                        <i class="bi bi-arrow-left me-1"></i> Volver a Ofertas
+                    </button>
+                    <h2 class="fw-bold m-0" id="tituloOfertaSeleccionada">Candidatos Postulados</h2>
+                </div>
+                
+                <!-- Barra de Filtrado Rápido -->
+                <div class="d-flex align-items-center gap-2">
+                    <label class="text-muted small fw-semibold">Filtrar por Match mínimo:</label>
+                    <select id="filtroMatch" class="form-select form-select-sm" style="width: 140px;" onchange="filtrarCandidatos()">
+                        <option value="0">Todos (0%+)</option>
+                        <option value="50">Bueno (50%+)</option>
+                        <option value="75">Alto (75%+)</option>
+                        <option value="90">Excelente (90%+)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Tabla de Candidatos -->
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light text-uppercase fs-7">
+                            <tr>
+                                <th class="py-3 ps-4">#</th>
+                                <th class="py-3">ID Candidato</th>
+                                <th class="py-3">Compatibilidad (IA)</th>
+                                <th class="py-3">Resumen del Perfil (Gemini)</th>
+                                <th class="py-3 text-end pe-4">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tablaCandidatosBody">
+                            <!-- Inyectado por JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
     </div>
 
-    <!-- MODAL (Ventana flotante) PARA CREAR OFERTA -->
+    <!-- MODAL PARA CREAR OFERTA -->
     <div class="modal fade" id="modalCrearOferta" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow">
@@ -98,14 +145,14 @@
         </div>
     </div>
 
-    <!-- Scripts de Bootstrap (Necesarios para que el Modal funcione) -->
+    <!-- Scripts de Bootstrap -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-    <!-- JAVASCRIPT: Lógica de negocio -->
+    <!-- JAVASCRIPT: Lógica de negocio y filtrado -->
     <script>
         const token = localStorage.getItem('jwtToken');
+        let listaCandidatosGlobal = []; 
         
-        // 1. Seguridad básica
         if (!token) {
             window.location.href = 'login.html';
         }
@@ -115,7 +162,7 @@
             window.location.href = 'login.html';
         });
 
-        // 2. Función para Cargar Ofertas al entrar a la página
+        // 1. Cargar Ofertas
         async function cargarOfertas() {
             try {
                 const respuesta = await fetch('http://localhost:8080/api/ofertas', {
@@ -123,7 +170,7 @@
                 });
 
                 if (respuesta.status === 403) {
-                    alert("¡Oye! No tienes permisos de Empresa para ver esto.");
+                    alert("No tienes permisos de Empresa.");
                     window.location.href = 'login.html';
                     return;
                 }
@@ -142,12 +189,9 @@
                         return;
                     }
 
-                    // Limpiamos el texto de "Cargando..."
                     contenedor.innerHTML = '';
-
-                    // Dibujamos una tarjeta por cada oferta
                     ofertas.forEach(oferta => {
-                        const tarjetaHTML = `
+                        contenedor.innerHTML += `
                             <div class="col-md-6 col-lg-4 mb-4">
                                 <div class="card oferta-card h-100 p-3">
                                     <div class="card-body">
@@ -157,65 +201,156 @@
                                         </p>
                                     </div>
                                     <div class="card-footer bg-transparent border-0 pt-0">
-                                        <button class="btn btn-sm btn-outline-primary w-100" onclick="verCandidatos(${oferta.id})">
+                                        <button class="btn btn-sm btn-outline-primary w-100" onclick="verCandidatos(${oferta.id}, '${oferta.titulo}')">
                                             <i class="bi bi-people me-1"></i> Ver Candidatos & IA
                                         </button>
                                     </div>
                                 </div>
                             </div>
                         `;
-                        contenedor.innerHTML += tarjetaHTML;
                     });
                 }
             } catch (error) {
                 console.error("Error al cargar ofertas:", error);
-                document.getElementById('contenedorOfertas').innerHTML = `<p class="text-danger text-center">Error conectando con el servidor.</p>`;
             }
         }
 
-        // 3. Función para consultar los candidatos evaluados por la IA de esta oferta
-        async function verCandidatos(ofertaId) {
+        // 2. Cargar Candidatos de una Oferta
+        async function verCandidatos(ofertaId, tituloOferta) {
+            document.getElementById('tituloOfertaSeleccionada').innerText = `Candidatos para: ${tituloOferta}`;
+            document.getElementById('seccionOfertas').classList.add('d-none');
+            document.getElementById('seccionCandidatos').classList.remove('d-none');
+
+            const tbody = document.getElementById('tablaCandidatosBody');
+            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm text-primary me-2"></div>Cargando evaluación de IA y estados...</td></tr>`;
+
             try {
                 const respuesta = await fetch(`http://localhost:8080/api/postulaciones/empresa/ofertas/${ofertaId}/candidatos`, {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
 
                 if (respuesta.ok) {
-                    const postulaciones = await respuesta.json();
+                    let candidatos = await respuesta.json();
                     
-                    if (postulaciones.length === 0) {
-                        alert("Aún no hay candidatos postulados para esta oferta.");
-                        return;
-                    }
-
-                    // Construimos un reporte visual rápido con los datos de la IA
-                    let mensajeReporte = "--- RANKING DE CANDIDATOS (IA) ---\n\n";
-                    postulaciones.forEach((p, index) => {
-                        mensajeReporte += `${index + 1}. Candidato ID: ${p.candidatoId}\n`;
-                        mensajeReporte += `   ⭐ Compatibilidad (Match): ${p.porcentajeMatch}%\n`;
-                        mensajeReporte += `   📝 Resumen IA: ${p.resumenIa}\n\n`;
+                    // Comprobamos cuáles candidatos ya tienen la entrevista iniciada
+                    const promesas = candidatos.map(async (p) => {
+                        try {
+                            const res = await fetch(`http://localhost:8080/api/entrevistas/postulacion/${p.id}`, {
+                                headers: { 'Authorization': 'Bearer ' + token }
+                            });
+                            p.entrevistaIniciada = res.ok; 
+                        } catch(e) { 
+                            p.entrevistaIniciada = false; 
+                        }
+                        return p;
                     });
-
-                    alert(mensajeReporte);
+                    
+                    listaCandidatosGlobal = await Promise.all(promesas);
+                    renderizarTabla(listaCandidatosGlobal);
                 } else {
-                    alert("Error al obtener los candidatos.");
+                    tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Error al cargar los candidatos.</td></tr>`;
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Error de conexión con el servidor.");
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-4 text-danger">Error de conexión con el servidor.</td></tr>`;
             }
         }
 
-        // 4. Lógica para Crear una nueva Oferta
+        // 3. Renderizar la tabla de candidatos
+        function renderizarTabla(candidatos) {
+            const tbody = document.getElementById('tablaCandidatosBody');
+            
+            if (candidatos.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="text-center py-5 text-muted"><i class="bi bi-inbox fs-2"></i><p class="mt-2">No hay candidatos que cumplan con el filtro seleccionado.</p></td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = '';
+            candidatos.forEach((p, index) => {
+                let badgeColor = 'bg-danger';
+                if (p.porcentajeMatch >= 75) badgeColor = 'bg-success';
+                else if (p.porcentajeMatch >= 50) badgeColor = 'bg-warning text-dark';
+
+                // Mostrar botón de iniciar o badge de iniciada
+                let accionHtml = '';
+                if (p.entrevistaIniciada) {
+                    accionHtml = `<span class="badge bg-success p-2 shadow-sm"><i class="bi bi-check-circle-fill me-1"></i> IA Activada</span>`;
+                } else {
+                    accionHtml = `
+                        <button class="btn btn-sm btn-outline-primary shadow-sm fw-semibold" onclick="iniciarEntrevista(${p.id})">
+                            <i class="bi bi-robot me-1"></i> Iniciar Entrevista
+                        </button>
+                    `;
+                }
+
+                tbody.innerHTML += `
+                    <tr>
+                        <td class="ps-4 fw-semibold">${index + 1}</td>
+                        <td><span class="badge bg-light text-dark border">ID: ${p.candidatoId}</span></td>
+                        <td>
+                            <span class="badge ${badgeColor} badge-match fw-bold">
+                                ${p.porcentajeMatch}% Match
+                            </span>
+                        </td>
+                        <td class="text-muted small" style="max-width: 400px;">${p.resumenIa || 'Sin resumen disponible'}</td>
+                        <td class="text-end pe-4" id="accion-postulacion-${p.id}">
+                            ${accionHtml}
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        // 4. Iniciar la Entrevista llamando al backend
+        async function iniciarEntrevista(postulacionId) {
+            const contenedorAccion = document.getElementById(`accion-postulacion-${postulacionId}`);
+            const contenidoOriginal = contenedorAccion.innerHTML;
+            
+            // Estado de carga temporal
+            contenedorAccion.innerHTML = '<span class="spinner-border spinner-border-sm text-primary"></span>';
+
+            try {
+                const respuesta = await fetch(`http://localhost:8080/api/entrevistas/iniciar/${postulacionId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (respuesta.ok) {
+                    // Cambiar visualmente y actualizar el estado global para que el filtro no lo resetee
+                    contenedorAccion.innerHTML = `<span class="badge bg-success p-2 shadow-sm"><i class="bi bi-check-circle-fill me-1"></i> IA Activada</span>`;
+                    const candidato = listaCandidatosGlobal.find(c => c.id === postulacionId);
+                    if (candidato) candidato.entrevistaIniciada = true;
+                } else {
+                    alert("Error al iniciar la entrevista técnica.");
+                    contenedorAccion.innerHTML = contenidoOriginal;
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error de conexión al servidor.");
+                contenedorAccion.innerHTML = contenidoOriginal;
+            }
+        }
+
+        // 5. Filtrar candidatos según el selector de match
+        function filtrarCandidatos() {
+            const minMatch = parseInt(document.getElementById('filtroMatch').value);
+            const filtrados = listaCandidatosGlobal.filter(p => p.porcentajeMatch >= minMatch);
+            renderizarTabla(filtrados);
+        }
+
+        // 6. Volver a la vista de ofertas
+        function volverAOfertas() {
+            document.getElementById('seccionCandidatos').classList.add('d-none');
+            document.getElementById('seccionOfertas').classList.remove('d-none');
+            document.getElementById('filtroMatch').value = "0";
+        }
+
+        // 7. Crear Oferta
         document.getElementById('formCrearOferta').addEventListener('submit', async function(evento) {
             evento.preventDefault();
-            
             const btn = document.getElementById('btnGuardarOferta');
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Guardando...';
             btn.disabled = true;
-
-            const titulo = document.getElementById('tituloOferta').value;
-            const descripcion = document.getElementById('descOferta').value;
 
             try {
                 const respuesta = await fetch('http://localhost:8080/api/ofertas', {
@@ -225,34 +360,28 @@
                         'Authorization': 'Bearer ' + token
                     },
                     body: JSON.stringify({ 
-                        titulo: titulo, 
-                        descripcionPuesto: descripcion,
+                        titulo: document.getElementById('tituloOferta').value, 
+                        descripcionPuesto: document.getElementById('descOferta').value,
                         activa: true
                     })
                 });
 
                 if (respuesta.ok) {
-                    // Cerramos el modal de Bootstrap
-                    const modalEl = document.getElementById('modalCrearOferta');
-                    const modal = bootstrap.Modal.getInstance(modalEl);
-                    modal.hide();
-
-                    // Limpiamos el formulario y recargamos la lista
+                    bootstrap.Modal.getInstance(document.getElementById('modalCrearOferta')).hide();
                     this.reset();
                     cargarOfertas();
                 } else {
-                    alert("Error al crear la oferta. Verifica que tengas permisos (ROLE_EMPRESA).");
+                    alert("Error al crear la oferta.");
                 }
             } catch (error) {
                 console.error("Error:", error);
-                alert("Error de conexión al guardar.");
             } finally {
                 btn.innerHTML = 'Publicar Oferta';
                 btn.disabled = false;
             }
         });
 
-        // ¡Arrancamos la carga al iniciar la página!
+        // Arrancar
         cargarOfertas();
     </script>
 </body>

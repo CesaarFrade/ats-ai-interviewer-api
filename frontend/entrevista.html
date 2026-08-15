@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ATS - Entrevista Técnica con IA</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar-custom {
+            background-color: #ffffff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .chat-container {
+            max-width: 800px;
+            margin: auto;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            max-height: calc(100vh - 90px);
+        }
+        .chat-messages {
+            flex: 1;
+            background-color: #ffffff;
+            border-radius: 1rem;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+            margin-bottom: 20px;
+        }
+        .message {
+            margin-bottom: 15px;
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 1rem;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        .message.ia {
+            background-color: #f1f3f5;
+            color: #212529;
+            align-self: flex-start;
+            border-bottom-left-radius: 0.2rem;
+        }
+        .message.candidato {
+            background-color: #4f46e5;
+            color: #ffffff;
+            align-self: flex-end;
+            margin-left: auto;
+            border-bottom-right-radius: 0.2rem;
+        }
+        .chat-input-area {
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- BARRA DE NAVEGACIÓN -->
+    <nav class="navbar navbar-expand-lg navbar-custom py-3">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="panel-candidato.html">
+                <i class="bi bi-robot me-2"></i>Entrevista Técnica Autónoma (IA)
+            </a>
+            <button class="btn btn-outline-danger btn-sm" onclick="finalizarEntrevista()">
+                <i class="bi bi-box-arrow-right me-1"></i> Salir de la Entrevista
+            </button>
+        </div>
+    </nav>
+
+    <!-- CONTENEDOR DEL CHAT -->
+    <div class="chat-container">
+        
+        <!-- Historial de mensajes -->
+        <div id="chatMessages" class="chat-messages d-flex flex-column">
+            <div class="text-center text-muted my-auto" id="cargandoEntrevista">
+                <div class="spinner-border text-primary mb-2" role="status"></div>
+                <p class="small">Iniciando sesión con el agente de IA de Gemini...</p>
+            </div>
+        </div>
+
+        <!-- Área de escritura -->
+        <div class="chat-input-area">
+            <form id="chatForm" class="d-flex gap-2">
+                <input type="text" id="mensajeInput" class="form-control border-0 bg-light" placeholder="Escribe tu respuesta técnica aquí..." autocomplete="off" disabled required>
+                <button type="submit" class="btn btn-primary px-4" id="btnEnviar" disabled>
+                    <i class="bi bi-send-fill"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- SCRIPT DE LA LÓGICA DE CHAT -->
+    <script>
+        const token = localStorage.getItem('jwtToken');
+        if (!token) window.location.href = 'login.html';
+
+        // Capturamos el ID de la postulación desde la URL (ej: entrevista.html?postulacionId=1)
+        const urlParams = new URLSearchParams(window.location.search);
+        const postulacionId = urlParams.get('postulacionId');
+
+        if (!postulacionId) {
+            alert("No se ha especificado ninguna postulación.");
+            window.location.href = 'panel-candidato.html';
+        }
+
+        let entrevistaId = null;
+        const chatMessages = document.getElementById('chatMessages');
+        const mensajeInput = document.getElementById('mensajeInput');
+        const btnEnviar = document.getElementById('btnEnviar');
+
+       async function cargarEntrevista() {
+            try {
+                // Hacemos un GET para ver si la empresa ya inició la entrevista
+                const respuesta = await fetch(`http://localhost:8080/api/entrevistas/postulacion/${postulacionId}`, {
+                    method: 'GET',
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+
+                if (respuesta.ok) {
+                    const data = await respuesta.json();
+                    entrevistaId = data.id;
+
+                    chatMessages.innerHTML = '';
+                    agregarMensajeAlChat(data.historialConversacion);
+
+                    mensajeInput.disabled = false;
+                    btnEnviar.disabled = false;
+                    mensajeInput.focus();
+                } else if (respuesta.status === 404) {
+                    // Si no existe, es que la empresa aún no le ha dado al botón
+                    alert("La empresa aún no ha iniciado la fase de entrevista técnica para esta postulación.");
+                    window.location.href = 'panel-candidato.html';
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error de conexión con el servidor.");
+            }
+        }
+
+        // Arrancar al cargar
+        cargarEntrevista();
+
+        // Procesar el historial que viene del backend y formatearlo visualmente en burbujas
+        function agregarMensajeAlChat(historialTexto) {
+            chatMessages.innerHTML = '';
+            
+            // Separamos las líneas del historial ("IA: ..." / "Candidato: ...")
+            const lineas = historialTexto.split('\n');
+            
+            lineas.forEach(linea => {
+                if (!linea.trim()) return;
+
+                const div = document.createElement('div');
+                div.classList.add('message');
+
+                if (linea.startsWith('IA:')) {
+                    div.classList.add('ia');
+                    div.innerText = linea.replace('IA:', '').trim();
+                } else if (linea.startsWith('Candidato:')) {
+                    div.classList.add('candidato');
+                    div.innerText = linea.replace('Candidato:', '').trim();
+                }
+                chatMessages.appendChild(div);
+            });
+
+            // Auto-scroll hacia abajo para ver el último mensaje
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        // Enviar mensaje del candidato
+        document.getElementById('chatForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const textoMensaje = mensajeInput.value.trim();
+            if (!textoMensaje || !entrevistaId) return;
+
+            // Desactivar temporalmente mientras responde la IA
+            mensajeInput.value = '';
+            mensajeInput.disabled = true;
+            btnEnviar.disabled = true;
+
+            // Pintamos localmente el mensaje del usuario de forma rápida
+            const divTemp = document.createElement('div');
+            divTemp.classList.add('message', 'candidato');
+            divTemp.innerText = textoMensaje;
+            chatMessages.appendChild(divTemp);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            try {
+                const respuesta = await fetch(`http://localhost:8080/api/entrevistas/${entrevistaId}/mensaje`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain',
+                        'Authorization': 'Bearer ' + token
+                    },
+                    body: textoMensaje
+                });
+
+                if (respuesta.ok) {
+                    const respuestaIaTexto = await respuesta.text();
+
+                    // Añadimos la respuesta de la IA al chat visual
+                    const divIa = document.createElement('div');
+                    divIa.classList.add('message', 'ia');
+                    divIa.innerText = respuestaIaTexto;
+                    chatMessages.appendChild(divIa);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                } else {
+                    alert("Error al enviar el mensaje a la IA.");
+                }
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Error de red.");
+            } finally {
+                mensajeInput.disabled = false;
+                btnEnviar.disabled = false;
+                mensajeInput.focus();
+            }
+        });
+
+        function finalizarEntrevista() {
+            if (confirm("¿Estás seguro de que deseas salir de la entrevista?")) {
+                window.location.href = 'panel-candidato.html';
+            }
+        }
+
+        // Arrancar al cargar
+        cargarEntrevista();
+    </script>
+</body>
+</html>

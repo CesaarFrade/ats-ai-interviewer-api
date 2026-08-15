@@ -76,13 +76,28 @@
             <p id="textoRespuesta" class="mt-2 text-dark small" style="white-space: pre-wrap;"></p>
         </div>
 
-        <!-- 4. SECCIÓN DE OFERTAS DISPONIBLES PARA EL CANDIDATO -->
-        <div class="container mt-5 mb-5" style="max-width: 700px;">
-            <h3 class="fw-bold mb-3">Ofertas de Empleo Disponibles</h3>
-            <p class="text-muted small">Postúlate a las ofertas que encajen contigo para que la IA evalúe tu perfil.</p>
+        <!-- 4. SECCIÓN 1: MIS POSTULACIONES ACTIVAS -->
+        <div class="container mt-5 mb-4" style="padding: 0;">
+            <h3 class="fw-bold mb-3"><i class="bi bi-briefcase-fill text-primary me-2"></i>Mis Postulaciones Activas</h3>
+            <p class="text-muted small">Consulta tus matches y accede directamente a tus entrevistas técnicas con IA.</p>
             
-            <div id="contenedorOfertasCandidato" class="row">
-                <div class="col-12 text-center text-muted py-4">
+            <div id="contenedorMisPostulaciones" class="row">
+                <div class="col-12 text-center text-muted py-3">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
+                    <p class="small mt-2">Cargando tus postulaciones...</p>
+                </div>
+            </div>
+        </div>
+
+        <hr class="my-5">
+
+        <!-- 5. SECCIÓN 2: OTRAS OFERTAS DISPONIBLES -->
+        <div class="container mb-5" style="padding: 0;">
+            <h3 class="fw-bold mb-3"><i class="bi bi-search text-primary me-2"></i>Otras Ofertas Disponibles</h3>
+            <p class="text-muted small">Explora nuevas oportunidades y postúlate con tu CV.</p>
+            
+            <div id="contenedorOfertasDisponibles" class="row">
+                <div class="col-12 text-center text-muted py-3">
                     <div class="spinner-border spinner-border-sm text-primary" role="status"></div>
                     <p class="small mt-2">Cargando ofertas...</p>
                 </div>
@@ -90,9 +105,8 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT: La lógica de negocio del Frontend -->
+    <!-- JAVASCRIPT: Lógica avanzada separando postulaciones y ofertas libres -->
     <script>
-        // --- 1. SEGURIDAD FRONTEND (El Guardia de la Puerta) ---
         const token = localStorage.getItem('jwtToken');
         
         if (!token) {
@@ -104,7 +118,7 @@
             window.location.href = 'login.html';
         });
 
-        // --- 2. LÓGICA DE SUBIDA DE CV ---
+        // --- 1. LÓGICA DE SUBIDA DE CV ---
         document.getElementById('uploadForm').addEventListener('submit', async function(evento) {
             evento.preventDefault();
             
@@ -124,20 +138,19 @@
             try {
                 const respuesta = await fetch('http://localhost:8080/api/cvs/upload', {
                     method: 'POST',
-                    headers: {
-                        'Authorization': 'Bearer ' + token
-                    },
+                    headers: { 'Authorization': 'Bearer ' + token },
                     body: formData
                 });
 
                 if (respuesta.ok) {
                     const textoDelServidor = await respuesta.text();
-                    
                     document.getElementById('textoRespuesta').innerText = textoDelServidor;
                     document.getElementById('resultadoArea').classList.remove('d-none');
                     fileInput.value = '';
+                    // Recargamos el panel para actualizar estados si fuera necesario
+                    cargarPanelCandidato();
                 } else {
-                    alert("Error al subir el CV. Puede que tu sesión haya caducado o no tengas permisos.");
+                    alert("Error al subir el CV.");
                     if(respuesta.status === 403 || respuesta.status === 401) {
                         localStorage.removeItem('jwtToken');
                         window.location.href = 'login.html';
@@ -152,25 +165,64 @@
             }
         });
 
-        // --- 3. CARGAR OFERTAS PARA EL CANDIDATO ---
-        async function cargarOfertasParaCandidato() {
+        // --- 2. CARGAR Y SEPARAR DATOS DEL CANDIDATO (POSTULACIONES VS DISPONIBLES) ---
+        async function cargarPanelCandidato() {
             try {
-                const respuesta = await fetch('http://localhost:8080/api/ofertas', {
+                // 1. Obtenemos el perfil del candidato actual para sacar su ID
+                const resPerfil = await fetch('http://localhost:8080/api/candidatos/me', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
+                if (!resPerfil.ok) return;
+                const candidato = await resPerfil.json();
 
-                if (respuesta.ok) {
-                    const ofertas = await respuesta.json();
-                    const contenedor = document.getElementById('contenedorOfertasCandidato');
-                    
-                    if (ofertas.length === 0) {
-                        contenedor.innerHTML = `<p class="text-muted text-center">No hay ofertas disponibles en este momento.</p>`;
-                        return;
-                    }
+                // 2. Obtenemos en paralelo las ofertas y las postulaciones del candidato
+                const [resOfertas, resPostulaciones] = await Promise.all([
+                    fetch('http://localhost:8080/api/ofertas', { headers: { 'Authorization': 'Bearer ' + token } }),
+                    fetch(`http://localhost:8080/api/postulaciones/candidato/${candidato.id}`, { headers: { 'Authorization': 'Bearer ' + token } })
+                ]);
 
-                    contenedor.innerHTML = '';
-                    ofertas.forEach(oferta => {
-                        contenedor.innerHTML += `
+                const ofertas = resOfertas.ok ? await resOfertas.json() : [];
+                const misPostulaciones = resPostulaciones.ok ? await resPostulaciones.json() : [];
+
+                // Creamos un mapa o conjunto con los IDs de las ofertas a las que ya se ha postulado
+                const idsOfertasPostuladas = new Set(misPostulaciones.map(p => p.ofertaId));
+
+                const contenedorMisPost = document.getElementById('contenedorMisPostulaciones');
+                const contenedorDisponibles = document.getElementById('contenedorOfertasDisponibles');
+
+                // --- PINTAR MIS POSTULACIONES ---
+                if (misPostulaciones.length === 0) {
+                    contenedorMisPost.innerHTML = `<div class="col-12"><p class="text-muted small text-center py-2 bg-white rounded shadow-sm">Aún no te has postulado a ninguna oferta.</p></div>`;
+                } else {
+                    contenedorMisPost.innerHTML = '';
+                    misPostulaciones.forEach(p => {
+                        contenedorMisPost.innerHTML += `
+                            <div class="col-12 mb-3">
+                                <div class="card p-3 shadow-sm border-0 bg-light">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="fw-bold text-dark m-0">Oferta #${p.ofertaId}</h5>
+                                        <span class="badge bg-success">${p.porcentajeMatch}% Match</span>
+                                    </div>
+                                    <p class="text-muted small mt-2 mb-2">${p.resumenIa || 'Evaluación completada por IA.'}</p>
+                                    
+                                    <button class="btn btn-sm btn-outline-primary align-self-start mt-2" onclick="window.location.href='entrevista.html?postulacionId=${p.id}'">
+                                        <i class="bi bi-chat-dots me-1"></i> Ir al chat de Entrevista (Si está activa)
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+
+                // --- PINTAR OTRAS OFERTAS DISPONIBLES (EXCLUYENDO LAS YA POSTULADAS) ---
+                const ofertasLibres = ofertas.filter(o => !idsOfertasPostuladas.has(o.id));
+
+                if (ofertasLibres.length === 0) {
+                    contenedorDisponibles.innerHTML = `<div class="col-12"><p class="text-muted small text-center py-2 bg-white rounded shadow-sm">No hay más ofertas disponibles en este momento.</p></div>`;
+                } else {
+                    contenedorDisponibles.innerHTML = '';
+                    ofertasLibres.forEach(oferta => {
+                        contenedorDisponibles.innerHTML += `
                             <div class="col-12 mb-3">
                                 <div class="card p-3 shadow-sm border-0">
                                     <h5 class="fw-bold text-primary">${oferta.titulo}</h5>
@@ -183,61 +235,53 @@
                         `;
                     });
                 }
+
             } catch (error) {
-                console.error("Error cargando ofertas:", error);
+                console.error("Error cargando el panel:", error);
             }
         }
 
-        // --- 4. ACCIÓN REAL DE POSTULACIÓN (OBTIENE EL ID DINÁMICAMENTE Y DISPARA LA IA) ---
+        // --- 3. ACCIÓN DE POSTULACIÓN ---
         async function postularse(ofertaId) {
-            const btnPostular = document.getElementById(`btn-postular-${ofertaId}`);
-            const textoBtnOriginal = btnPostular.innerHTML;
-            btnPostular.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Evaluando con IA...';
-            btnPostular.disabled = true;
+            const btn = document.getElementById(`btn-postular-${ofertaId}`);
+            const textoOriginal = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Evaluando...';
+            btn.disabled = true;
 
             try {
-                // 1. Obtenemos de forma dinámica el ID real del candidato logueado usando el token
-                const respuestaPerfil = await fetch('http://localhost:8080/api/candidatos/me', {
+                const resPerfil = await fetch('http://localhost:8080/api/candidatos/me', {
                     headers: { 'Authorization': 'Bearer ' + token }
                 });
+                const candidato = await resPerfil.json();
 
-                if (!respuestaPerfil.ok) {
-                    throw new Error("No se pudo obtener el perfil del candidato actual.");
-                }
-
-                const candidatoData = await respuestaPerfil.json();
-                const candidatoIdReal = candidatoData.id;
-
-                // 2. Enviamos la postulación con el ID real obtenido
                 const respuesta = await fetch('http://localhost:8080/api/postulaciones', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token
                     },
-                    body: JSON.stringify({
-                        candidatoId: candidatoIdReal,
-                        ofertaId: ofertaId
-                    })
+                    body: JSON.stringify({ candidatoId: candidato.id, ofertaId: ofertaId })
                 });
 
                 if (respuesta.ok) {
                     const mensaje = await respuesta.text();
-                    alert("¡Postulación enviada con éxito! La IA de Gemini ha evaluado tu perfil y guardado el match.\n\n" + mensaje);
+                    alert("¡Postulación enviada con éxito!\n\n" + mensaje);
+                    // Recargamos el panel para que la oferta pase automáticamente a "Mis Postulaciones Activas"
+                    cargarPanelCandidato();
                 } else {
-                    alert("Error al postularse. Asegúrate de haber subido tu CV previamente en este panel.");
+                    alert("Error al postularse. Asegúrate de haber subido tu CV previamente.");
                 }
             } catch (error) {
-                console.error("Error en la postulación:", error);
+                console.error("Error:", error);
                 alert("Error de conexión al intentar postularse.");
             } finally {
-                btnPostular.innerHTML = textoBtnOriginal;
-                btnPostular.disabled = false;
+                btn.innerHTML = textoOriginal;
+                btn.disabled = false;
             }
         }
 
-        // Ejecutamos la carga al abrir el panel
-        cargarOfertasParaCandidato();
+        // Arrancar al cargar la página
+        cargarPanelCandidato();
     </script>
 </body>
 </html>

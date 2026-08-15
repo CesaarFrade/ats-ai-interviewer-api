@@ -18,4 +18,6 @@ public interface IPostulacionService {
     public void editPostulacion(PostulacionRequestDTO postulacion, Long id_postulacion);
 
     List<PostulacionResponseDTO> getPostulacionesParaEmpresa(Long ofertaId, Double minMatch);
+
+    public List<PostulacionResponseDTO> obtenerPostulacionesPorCandidato(Long candidatoId);
 }

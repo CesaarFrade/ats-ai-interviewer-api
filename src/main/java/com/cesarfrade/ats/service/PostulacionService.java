@@ -157,4 +157,17 @@ public class PostulacionService implements IPostulacionService {
                 .resumenIa(postulacion.getResumenIa())
                 .build();
     }
+
+    // Método para obtener todas las postulaciones de un candidato específico
+    public List<PostulacionResponseDTO> obtenerPostulacionesPorCandidato(Long candidatoId) {
+        // Aseguramos que el candidato exista
+        if (!candRepo.existsById(candidatoId)) {
+            throw new NotFoundException("No existe ningún candidato con el id indicado");
+        }
+
+        // Buscamos las postulaciones filtrando por el ID del candidato y las mapeamos a DTO
+        return postRepo.findByCandidatoId(candidatoId).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
 }

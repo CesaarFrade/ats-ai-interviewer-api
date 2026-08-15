@@ -41,6 +41,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/candidatos/me").hasRole("CANDIDATO") // O hasAnyRole según manejes los prefijos
+                        .requestMatchers("/api/entrevistas/**").authenticated()
+                        .requestMatchers("/api/postulaciones/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);

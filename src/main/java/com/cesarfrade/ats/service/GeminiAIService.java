@@ -62,4 +62,26 @@ public class GeminiAIService {
             return "MATCH: 0\nRESUMEN: Error al evaluar con la IA.";
         }
     }
+
+    // Método auxiliar para texto libre en entrevistas
+    public String generarTextoLibre(String prompt) {
+        Map<String, Object> part = Map.of("text", prompt);
+        Map<String, Object> content = Map.of("parts", List.of(part));
+        Map<String, Object> requestBody = Map.of("contents", List.of(content));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        String urlConToken = apiUrl + "?key=" + apiKey;
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestBody, headers);
+
+        try {
+            String response = restTemplate.postForObject(urlConToken, request, String.class);
+            JsonNode rootNode = objectMapper.readTree(response);
+            return rootNode.path("candidates").get(0).path("content").path("parts").get(0).path("text").asText();
+        } catch (Exception e) {
+            System.err.println("Error al comunicarse con Gemini: " + e.getMessage());
+            return "Hola, ha ocurrido un error de conexión con la IA.";
+        }
+    }
 }

@@ -8,6 +8,9 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -47,6 +50,13 @@ public class PostulacionController {
     public ResponseEntity<String> eliminarPostulacion(@PathVariable Long id) {
         postulacionService.deletePostulacion(id);
         return new ResponseEntity<>("¡Postulación eliminada con éxito de la base de datos!", HttpStatus.OK);
+    }
+
+    @GetMapping("/candidato/{candidatoId}")
+    @PreAuthorize("hasRole('CANDIDATO')")
+    public ResponseEntity<List<PostulacionResponseDTO>> obtenerPorCandidato(@PathVariable Long candidatoId) {
+        List<PostulacionResponseDTO> postulaciones = postulacionService.obtenerPostulacionesPorCandidato(candidatoId);
+        return ResponseEntity.ok(postulaciones);
     }
 }
 

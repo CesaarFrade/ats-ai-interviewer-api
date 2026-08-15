@@ -36,7 +36,7 @@ public class CandidatoController {
     }
 
     @GetMapping("/me")
-    @PreAuthorize("hasRole('CANDIDATO')")
+    @PreAuthorize("hasAuthority('ROLE_CANDIDATO')")
     public ResponseEntity<CandidatoResponseDTO> obtenerMiPerfil(@AuthenticationPrincipal UserDetails userDetails) {
         // userDetails.getUsername() nos da el email extraído del token JWT
         CandidatoResponseDTO candidato = candidatoService.findByEmail(userDetails.getUsername());
