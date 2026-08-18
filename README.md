@@ -19,7 +19,13 @@ El proyecto está diseñado bajo una arquitectura desacoplada y basada en evento
 2. **Gestión de Ofertas:** Las empresas publican puestos de trabajo con requisitos detallados.
 3. **Procesamiento de CVs:** Los candidatos suben su currículum en PDF; el backend extrae el texto automáticamente y lo asocia al perfil.
 4. **Matching por IA:** Al postularse, Gemini evalúa la oferta frente al texto crudo del CV, devolviendo un porcentaje de compatibilidad y un resumen analítico.
-5. **Entrevistas Técnicas Inteligentes (🤖 *Killer Feature*):** Las empresas pueden activar una entrevista para los mejores candidatos. El sistema abre una sala de chat donde Gemini, asumiendo el rol de Tech Lead, saluda al candidato y le realiza preguntas técnicas en tiempo real basadas en la oferta de trabajo.
+5. **Entrevistas Técnicas Inteligentes (🤖 *Killer Feature*):** Las empresas pueden activar una entrevista para los mejores candidatos. El sistema abre una sala de chat donde Gemini, asumiendo el rol de Tech Lead, realiza preguntas técnicas en tiempo real. Al terminar, **la IA cierra la entrevista automáticamente y genera una evaluación final silenciosa** que actualiza la nota del candidato en el panel de la empresa.
+
+## 🧪 Datos y Usuarios de Prueba
+Para facilitar las pruebas del sistema sin tener que registrar perfiles desde cero, el repositorio incluye una carpeta llamada `Usuarios de Prueba`. Dentro encontrarás:
+* Archivos `.txt` con credenciales de prueba listas para usar (roles de Empresa y Candidato).
+* Textos de ejemplo para publicar Ofertas de trabajo realistas.
+* Currículums de prueba en formato `.pdf` listos para ser subidos y procesados por el motor de IA.
 
 ## 🔑 Variables de Entorno (Backend)
 Antes de ejecutar el proyecto, configura la siguiente variable en tu sistema o IDE (`application.properties`):
@@ -43,5 +49,3 @@ El frontend se comunica con la API mediante peticiones asíncronas seguras:
 * **Autenticación:** `POST /api/auth/login` y `POST /api/auth/registro` (Control de tokens y roles).
 * **Ofertas:** `GET /api/ofertas` y `POST /api/ofertas` (Gestión para reclutadores).
 * **CVs:** `POST /api/cvs/upload` (Sube y extrae texto de PDFs de forma segura por usuario autenticado).
-* **Postulaciones (Match IA):** `GET /api/postulaciones/empresa/ofertas/{ofertaId}/candidatos` (Ranking de candidatos según compatibilidad).
-* **Entrevistas IA:** `POST /api/entrevistas/iniciar/{postulacionId}` y `POST /api/entrevistas/{entrevistaId}/mensaje` (Control del flujo del chat bot técnico).
