@@ -177,15 +177,36 @@
 
                 // 2. Obtenemos en paralelo las ofertas y las postulaciones del candidato
                 const [resOfertas, resPostulaciones] = await Promise.all([
-                    fetch('http://localhost:8080/api/ofertas', { headers: { 'Authorization': 'Bearer ' + token } }),
+                    fetch('http://localhost:8080/api/ofertas/todas', { headers: { 'Authorization': 'Bearer ' + token } }),
                     fetch(`http://localhost:8080/api/postulaciones/candidato/${candidato.id}`, { headers: { 'Authorization': 'Bearer ' + token } })
                 ]);
 
                 const ofertas = resOfertas.ok ? await resOfertas.json() : [];
-                const misPostulaciones = resPostulaciones.ok ? await resPostulaciones.json() : [];
+                const misPostulacionesCrudas = resPostulaciones.ok ? await resPostulaciones.json() : [];
 
-                // Creamos un mapa o conjunto con los IDs de las ofertas a las que ya se ha postulado
-                const idsOfertasPostuladas = new Set(misPostulaciones.map(p => p.ofertaId));
+                // COMPROBAR ESTADO DE LA ENTREVISTA PARA CADA POSTULACIÓN
+                const promesasPostulaciones = misPostulacionesCrudas.map(async (p) => {
+                    try {
+                        const resEntrevista = await fetch(`http://localhost:8080/api/entrevistas/postulacion/${p.id}`, {
+                            headers: { 'Authorization': 'Bearer ' + token }
+                        });
+                        
+                        if (resEntrevista.ok) {
+                            const dataEntrevista = await resEntrevista.json();
+                            p.entrevistaIniciada = true;
+                            p.entrevistaFinalizada = (dataEntrevista.estado === 'FINALIZADA');
+                        } else {
+                            p.entrevistaIniciada = false;
+                            p.entrevistaFinalizada = false;
+                        }
+                    } catch (e) {
+                        p.entrevistaIniciada = false;
+                        p.entrevistaFinalizada = false;
+                    }
+                    return p;
+                });
+
+                const misPostulaciones = await Promise.all(promesasPostulaciones);
 
                 const contenedorMisPost = document.getElementById('contenedorMisPostulaciones');
                 const contenedorDisponibles = document.getElementById('contenedorOfertasDisponibles');
@@ -196,25 +217,53 @@
                 } else {
                     contenedorMisPost.innerHTML = '';
                     misPostulaciones.forEach(p => {
+                        
+                        // Lógica visual según los 3 estados posibles
+                        let badgeHtml, descHtml, btnHtml, cardClass;
+
+                        if (!p.entrevistaIniciada) {
+                            // ESTADO 1: Empresa aún no le ha dado al botón
+                            badgeHtml = `<span class="badge bg-secondary shadow-sm px-3 py-2"><i class="bi bi-hourglass-split me-1"></i> En revisión</span>`;
+                            descHtml = `Tu currículum ha sido procesado correctamente y está siendo evaluado por la empresa. Si tu perfil encaja, activarán la entrevista técnica.`;
+                            btnHtml = `<button class="btn btn-sm btn-outline-secondary align-self-start px-3" disabled><i class="bi bi-lock-fill me-1"></i> Entrevista Bloqueada</button>`;
+                            cardClass = 'bg-light border-0';
+
+                        } else if (p.entrevistaIniciada && !p.entrevistaFinalizada) {
+                            // ESTADO 2: Entrevista iniciada y lista para hacerse
+                            badgeHtml = `<span class="badge bg-success shadow-sm px-3 py-2"><i class="bi bi-unlock-fill me-1"></i> Entrevista Activa</span>`;
+                            descHtml = `<strong class="text-success">¡Buenas noticias!</strong> La empresa ha revisado tu perfil y te ha invitado a realizar la entrevista técnica con nuestro agente de IA.`;
+                            btnHtml = `<button class="btn btn-sm btn-primary align-self-start shadow-sm fw-bold px-3" onclick="window.location.href='entrevista.html?postulacionId=${p.id}'"><i class="bi bi-play-circle-fill me-1"></i> Iniciar Entrevista Técnica</button>`;
+                            cardClass = 'bg-white border-start border-success border-4';
+
+                        } else if (p.entrevistaFinalizada) {
+                            // ESTADO 3: Entrevista ya terminada por el candidato
+                            badgeHtml = `<span class="badge bg-dark shadow-sm px-3 py-2"><i class="bi bi-check2-all me-1"></i> Completada</span>`;
+                            descHtml = `<strong class="text-dark">Entrevista finalizada.</strong> Será contactado próximamente para más información sobre los siguientes pasos en el proceso.`;
+                            btnHtml = `<button class="btn btn-sm btn-outline-dark align-self-start shadow-sm px-3" onclick="window.location.href='entrevista.html?postulacionId=${p.id}'"><i class="bi bi-eye-fill me-1"></i> Ver historial de chat</button>`;
+                            cardClass = 'bg-white border-start border-dark border-4';
+                        }
+
                         contenedorMisPost.innerHTML += `
                             <div class="col-12 mb-3">
-                                <div class="card p-3 shadow-sm border-0 bg-light">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <h5 class="fw-bold text-dark m-0">Oferta #${p.ofertaId}</h5>
-                                        <span class="badge bg-success">${p.porcentajeMatch}% Match</span>
+                                <div class="card p-3 shadow-sm ${cardClass}">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="fw-bold text-dark m-0">
+                                            <i class="bi bi-file-earmark-check text-primary me-2"></i>Postulación a Oferta #${p.ofertaId}
+                                        </h5>
+                                        ${badgeHtml}
                                     </div>
-                                    <p class="text-muted small mt-2 mb-2">${p.resumenIa || 'Evaluación completada por IA.'}</p>
-                                    
-                                    <button class="btn btn-sm btn-outline-primary align-self-start mt-2" onclick="window.location.href='entrevista.html?postulacionId=${p.id}'">
-                                        <i class="bi bi-chat-dots me-1"></i> Ir al chat de Entrevista (Si está activa)
-                                    </button>
+                                    <p class="text-muted small mb-3">
+                                        ${descHtml}
+                                    </p>
+                                    ${btnHtml}
                                 </div>
                             </div>
                         `;
                     });
                 }
-
+                
                 // --- PINTAR OTRAS OFERTAS DISPONIBLES (EXCLUYENDO LAS YA POSTULADAS) ---
+                const idsOfertasPostuladas = new Set(misPostulaciones.map(p => p.ofertaId));
                 const ofertasLibres = ofertas.filter(o => !idsOfertasPostuladas.has(o.id));
 
                 if (ofertasLibres.length === 0) {
@@ -240,7 +289,6 @@
                 console.error("Error cargando el panel:", error);
             }
         }
-
         // --- 3. ACCIÓN DE POSTULACIÓN ---
         async function postularse(ofertaId) {
             const btn = document.getElementById(`btn-postular-${ofertaId}`);

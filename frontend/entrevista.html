@@ -126,7 +126,7 @@
 
        async function cargarEntrevista() {
             try {
-                // Hacemos un GET para ver si la empresa ya inició la entrevista
+                // Hacemos un GET para obtener los datos de la entrevista
                 const respuesta = await fetch(`http://localhost:8080/api/entrevistas/postulacion/${postulacionId}`, {
                     method: 'GET',
                     headers: { 'Authorization': 'Bearer ' + token }
@@ -139,11 +139,22 @@
                     chatMessages.innerHTML = '';
                     agregarMensajeAlChat(data.historialConversacion);
 
-                    mensajeInput.disabled = false;
-                    btnEnviar.disabled = false;
-                    mensajeInput.focus();
+                    // --- COMPROBAR EL ESTADO AL CARGAR ---
+                    if (data.estado === 'FINALIZADA') {
+                        // Si ya estaba finalizada, la bloqueamos visualmente de inmediato
+                        mensajeInput.placeholder = "Entrevista finalizada. ¡Gracias por participar!";
+                        mensajeInput.classList.remove('bg-light');
+                        mensajeInput.classList.add('bg-secondary', 'text-white');
+                        mensajeInput.disabled = true;
+                        btnEnviar.disabled = true;
+                    } else {
+                        // Si sigue EN_PROCESO, la habilitamos para que escriba
+                        mensajeInput.disabled = false;
+                        btnEnviar.disabled = false;
+                        mensajeInput.focus();
+                    }
+                    
                 } else if (respuesta.status === 404) {
-                    // Si no existe, es que la empresa aún no le ha dado al botón
                     alert("La empresa aún no ha iniciado la fase de entrevista técnica para esta postulación.");
                     window.location.href = 'panel-candidato.html';
                 }
@@ -193,6 +204,7 @@
             mensajeInput.value = '';
             mensajeInput.disabled = true;
             btnEnviar.disabled = true;
+            mensajeInput.placeholder = "Gemini está escribiendo...";
 
             // Pintamos localmente el mensaje del usuario de forma rápida
             const divTemp = document.createElement('div');
@@ -205,14 +217,32 @@
                 const respuesta = await fetch(`http://localhost:8080/api/entrevistas/${entrevistaId}/mensaje`, {
                     method: 'POST',
                     headers: {
-                        'Content-Type': 'text/plain',
+                        'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + token
                     },
-                    body: textoMensaje
+                    body: JSON.stringify({ mensaje: textoMensaje })
                 });
 
                 if (respuesta.ok) {
-                    const respuestaIaTexto = await respuesta.text();
+                    let respuestaIaTexto = await respuesta.text(); // Usamos 'let' para poder modificarla
+
+                    // --- DETECTAR FIN DE ENTREVISTA ---
+                    let entrevistaTerminada = false;
+                    if (respuestaIaTexto.startsWith("FINALIZADA|")) {
+                        entrevistaTerminada = true;
+                        respuestaIaTexto = respuestaIaTexto.replace("FINALIZADA|", ""); // Limpiamos la etiqueta
+                        
+                        // Bloqueo visual permanente
+                        mensajeInput.placeholder = "Entrevista finalizada. ¡Gracias por participar!";
+                        mensajeInput.classList.remove('bg-light');
+                        mensajeInput.classList.add('bg-secondary', 'text-white');
+                    } else {
+                        // Si no ha terminado, restauramos el input para la siguiente pregunta
+                        mensajeInput.placeholder = "Escribe tu respuesta técnica aquí...";
+                        mensajeInput.disabled = false;
+                        btnEnviar.disabled = false;
+                        setTimeout(() => mensajeInput.focus(), 100);
+                    }
 
                     // Añadimos la respuesta de la IA al chat visual
                     const divIa = document.createElement('div');
@@ -220,18 +250,25 @@
                     divIa.innerText = respuestaIaTexto;
                     chatMessages.appendChild(divIa);
                     chatMessages.scrollTop = chatMessages.scrollHeight;
+
                 } else {
                     alert("Error al enviar el mensaje a la IA.");
+                    restaurarInput();
                 }
             } catch (error) {
                 console.error("Error:", error);
                 alert("Error de red.");
-            } finally {
-                mensajeInput.disabled = false;
-                btnEnviar.disabled = false;
-                mensajeInput.focus();
+                restaurarInput();
             }
         });
+
+        // Función auxiliar para reabrir el input si hay un error de conexión
+        function restaurarInput() {
+            mensajeInput.disabled = false;
+            btnEnviar.disabled = false;
+            mensajeInput.placeholder = "Escribe tu respuesta técnica aquí...";
+            mensajeInput.focus();
+        };
 
         function finalizarEntrevista() {
             if (confirm("¿Estás seguro de que deseas salir de la entrevista?")) {

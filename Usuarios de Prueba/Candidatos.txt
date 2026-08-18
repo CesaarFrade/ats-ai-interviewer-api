@@ -1,0 +1,29 @@
+Candidato 1:
+Carlos Backend
+carlos@test.com
++34 600111222
+1234
+
+Candidato 2: 
+Laura Frontend
+laura@test.com
++34 600333444
+2345
+
+Candidato 3: 
+Marcos Data
+marcos@test.com
++34 600555666
+3456
+
+Candidato 4: 
+Elena Junior
+elena@test.com
++34 600777888
+4567
+
+Candidato 5: 
+Sofía Marketing
+sofia@test.com
++34 600999000
+5678

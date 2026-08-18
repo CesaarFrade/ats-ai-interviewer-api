@@ -1,0 +1,29 @@
+Oferta 1
+Desarrollador Java / Spring Boot Senior
+
+Buscamos un experto en Java 17, Spring Boot, Spring Security, JWT y bases de datos relacionales. Se valorará experiencia en microservicios y despliegues con Docker. Trabajo 100% remoto.
+
+Oferta 2
+Data Scientist / AI Engineer
+
+Únete a nuestro equipo de innovación. Requerimos experiencia en Python, Machine Learning, integración de LLMs (OpenAI/Gemini) y creación de pipelines de datos con Pandas o TensorFlow
+
+Oferta 3
+Desarrollador Junior Backend
+
+Buscamos un perfil junior con ganas de aprender y crecer profesionalmente. Requisitos: conocimientos teóricos de programación orientada a objetos (C++ o Java), bases de datos y mucha motivación.
+
+Oferta 4
+Frontend Developer (React.js / UX)
+
+Necesitamos un perfil front-end para maquetar interfaces responsivas y visualmente atractivas. Requisitos: dominio de HTML5, CSS3, JavaScript (ES6), React y consumo de APIs REST.
+
+Oferta 5
+Especialista en Marketing Digital y RRSS
+
+Buscamos un experto en SEO/SEM, gestión de comunidades online, creación de campañas en Google Ads/Facebook Ads y uso de herramientas de diseño y analítica web como Google Analytics.
+
+Oferta 6
+Fullstack Developer Pleno
+
+Posición mixta para desarrollador versátil. Requisitos: dominio de HTML/CSS/JS en el frontend y experiencia demostrable montando APIs escalables en el backend. Valoramos capacidad de trabajo en equipo.

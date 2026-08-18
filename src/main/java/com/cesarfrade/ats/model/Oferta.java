@@ -1,5 +1,6 @@
 package com.cesarfrade.ats.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
@@ -29,6 +30,11 @@ public class Oferta {
 
     @Column(nullable = false)
     private boolean activa;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "creador_id", nullable = false)
+    @JsonIgnore
+    private Usuario creador;
 
     @PrePersist
     protected void onCreate() {

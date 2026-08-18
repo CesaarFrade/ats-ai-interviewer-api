@@ -4,7 +4,9 @@ import com.cesarfrade.ats.dto.OfertaRequestDTO;
 import com.cesarfrade.ats.dto.OfertaResponseDTO;
 import com.cesarfrade.ats.exception.NotFoundException;
 import com.cesarfrade.ats.model.Oferta;
+import com.cesarfrade.ats.model.Usuario; // IMPORTANTE
 import com.cesarfrade.ats.repository.OfertaRepository;
+import com.cesarfrade.ats.repository.UsuarioRepository; // IMPORTANTE
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -13,7 +15,9 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class OfertaService implements IOfertaService {
+
     private final OfertaRepository ofeRepo;
+    private final UsuarioRepository usuarioRepository; // Añadimos el repositorio de usuario
 
     //Métodos CRUD
     @Override
@@ -22,11 +26,11 @@ public class OfertaService implements IOfertaService {
         if (oferta != null) {
             return mapToResponse(oferta);
         } else {
-            throw new NotFoundException("Por el momento, no existe ninguna oferta"
-                    + "con el id indicado");
+            throw new NotFoundException("Por el momento, no existe ninguna oferta con el id indicado");
         }
     }
 
+    // Mantenemos este por si los candidatos necesitan ver TODAS las ofertas de todas las empresas
     @Override
     public List<OfertaResponseDTO> getOfertas() {
         return ofeRepo.findAll().stream()
@@ -35,12 +39,25 @@ public class OfertaService implements IOfertaService {
     }
 
     @Override
-    public void saveOferta(OfertaRequestDTO ofertaDTO) {
+    public List<OfertaResponseDTO> getOfertasByEmpresa(String emailCreador) {
+        return ofeRepo.findByCreadorEmail(emailCreador).stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    @Override
+    public void saveOferta(OfertaRequestDTO ofertaDTO, String emailCreador) {
+        // Buscamos al usuario creador
+        Usuario creador = usuarioRepository.findByEmail(emailCreador)
+                .orElseThrow(() -> new NotFoundException("No se ha encontrado el usuario con email: " + emailCreador));
+
         Oferta oferta = Oferta.builder()
                 .titulo(ofertaDTO.getTitulo())
                 .descripcionPuesto(ofertaDTO.getDescripcionPuesto())
                 .activa(ofertaDTO.isActiva())
+                .creador(creador) // ¡ASIGNAMOS LA EMPRESA AQUÍ!
                 .build();
+
         ofeRepo.save(oferta);
     }
 
@@ -49,8 +66,7 @@ public class OfertaService implements IOfertaService {
         if (ofeRepo.existsById(id_oferta)) {
             ofeRepo.deleteById(id_oferta);
         } else {
-            throw new NotFoundException("Por el momento, no existe ninguna oferta"
-                    + "con el id indicado");
+            throw new NotFoundException("Por el momento, no existe ninguna oferta con el id indicado");
         }
     }
 
@@ -58,8 +74,7 @@ public class OfertaService implements IOfertaService {
     public void editOferta(OfertaRequestDTO ofertaDTO, Long id_oferta) {
         Oferta ofertaInicial = ofeRepo.findById(id_oferta).orElse(null);
         if (ofertaInicial == null) {
-            throw new NotFoundException("Por el momento, no existe ninguna oferta"
-                    + "con el id indicado");
+            throw new NotFoundException("Por el momento, no existe ninguna oferta con el id indicado");
         } else {
             ofertaInicial.setActiva(ofertaDTO.isActiva());
             if (ofertaDTO.getTitulo() != null) {

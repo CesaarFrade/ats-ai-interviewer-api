@@ -8,7 +8,8 @@ import java.util.List;
 public interface IOfertaService {
     public OfertaResponseDTO findOferta(Long id_oferta);
     public List<OfertaResponseDTO> getOfertas();
-    public void saveOferta(OfertaRequestDTO oferta);
+    public List<OfertaResponseDTO> getOfertasByEmpresa(String emailCreador);
+    public void saveOferta(OfertaRequestDTO oferta, String emailCreador);
     public void deleteOferta(Long id_oferta);
     public void editOferta(OfertaRequestDTO oferta, Long id_oferta);
 }

@@ -17,7 +17,7 @@ public class EntrevistaService {
 
     private final EntrevistaRepository entrevistaRepository;
     private final PostulacionRepository postulacionRepository;
-    private final GeminiAIService geminiAIService; // Usamos tu servicio HTTP de Gemini
+    private final GeminiAIService geminiAIService;
 
     // 1. Iniciar la entrevista para una postulación
     public Entrevista iniciarEntrevista(Long postulacionId) {
@@ -26,22 +26,30 @@ public class EntrevistaService {
 
         return entrevistaRepository.findByPostulacionId(postulacionId).orElseGet(() -> {
 
-            // Construimos el prompt inicial
+            // PROMPT INICIAL ESTRICTO
             String promptInicial = String.format(
-                    "Eres un entrevistador técnico experto de recursos humanos. Vas a realizar una entrevista técnica corta (de 3 o 4 preguntas) a un candidato.\n" +
+                    "Eres un Tech Lead experto de recursos humanos. Vas a realizar una entrevista técnica corta (de 3 o 4 preguntas) a un candidato.\n" +
                             "Puesto de trabajo: %s\n" +
                             "Descripción del puesto: %s\n\n" +
-                            "Por favor, saluda al candidato de forma profesional, haz una breve introducción al puesto y lánzale la primera pregunta técnica basada en la oferta.",
+                            "REGLAS ESTRICTAS DE FORMATO:\n" +
+                            "1. Saluda al candidato de forma profesional, haz una breve introducción al puesto y lánzale la primera pregunta técnica basada en la oferta.\n" +
+                            "2. Háblale DIRECTAMENTE al candidato como si estuvierais en un chat.\n" +
+                            "3. PROHIBIDO escribir 'MATCH:' o 'RESUMEN:' en tu respuesta. Nunca incluyas notas internas.\n" +
+                            "4. Regla de finalización: Solo debes realizar un máximo de 3 o 4 preguntas técnicas en total. Cuando creas que ya tienes suficiente información para evaluar al candidato, despídete cordialmente, agradécele su tiempo y añade obligatoriamente la etiqueta [FIN_ENTREVISTA] al final de tu mensaje.",
                     postulacion.getOferta().getTitulo(),
                     postulacion.getOferta().getDescripcionPuesto()
             );
 
-            // Llamamos a tu GeminiAIService reutilizando el método de evaluación o adaptándolo
-            String respuestaIa = geminiAIService.evaluarCandidato(promptInicial, "Inicio de entrevista técnica.");
+            String respuestaCrudaIa = geminiAIService.evaluarCandidato(promptInicial, "Inicio de entrevista técnica.");
+
+            // LIMPIEZA EXTREMA DEL SALUDO INICIAL (Por si acaso la IA desobedece desde el principio)
+            String respuestaLimpia = respuestaCrudaIa.replaceAll("(?i)MATCH:.*", "")
+                    .replaceAll("(?is)RESUMEN:.*?(?=\n\n|$)", "")
+                    .trim();
 
             Entrevista nuevaEntrevista = Entrevista.builder()
                     .postulacion(postulacion)
-                    .historialConversacion("IA: " + respuestaIa + "\n")
+                    .historialConversacion("IA: " + respuestaLimpia + "\n")
                     .estado("EN_PROCESO")
                     .fechaInicio(LocalDateTime.now())
                     .build();
@@ -57,20 +65,83 @@ public class EntrevistaService {
 
         String historialActualizado = entrevista.getHistorialConversacion() + "Candidato: " + mensajeCandidato + "\n";
 
+        // PROMPT CONTINUACIÓN ESTRICTO
         String promptContinuacion = String.format(
-                "Estás realizando una entrevista técnica. Este es el historial de la conversación:\n%s\n" +
-                        "El candidato acaba de responder lo anterior. Evalúa su respuesta, sé constructivo y haz la siguiente pregunta técnica, o si ya llevamos suficientes preguntas, despide amablemente al candidato.",
+                "Eres un Tech Lead realizando una entrevista técnica. Este es el historial de la conversación:\n%s\n" +
+                        "Evalúa la respuesta del candidato internamente y hazle la siguiente pregunta.\n\n" +
+                        "REGLAS ESTRICTAS DE FORMATO:\n" +
+                        "1. Háblale DIRECTAMENTE al candidato evaluando su respuesta de forma constructiva.\n" +
+                        "2. PROHIBIDO escribir 'MATCH:' o 'RESUMEN:' en tu respuesta. Nunca incluyas notas internas, solo el diálogo.\n" +
+                        "3. Haz un máximo de 3 preguntas en total. Cuando termines de evaluar (o si ya has hecho 3 preguntas), despídete cordialmente y añade OBLIGATORIAMENTE la etiqueta [FIN_ENTREVISTA] al final del mensaje.",
                 historialActualizado
         );
 
-        String respuestaIa = geminiAIService.evaluarCandidato("Continuación de entrevista", promptContinuacion);
+        String respuestaCrudaIa = geminiAIService.evaluarCandidato("Continuación de entrevista", promptContinuacion);
 
-        historialActualizado += "IA: " + respuestaIa + "\n";
+        // --- 1. LIMPIEZA EXTREMA CON REGEX (Anti alucinaciones de la IA) ---
+        String respuestaLimpia = respuestaCrudaIa.replaceAll("(?i)MATCH:.*", "")
+                .replaceAll("(?is)RESUMEN:.*?(?=\n\n|$)", "")
+                .trim();
+
+        // SALVAVIDAS: Si la IA solo generó notas internas y las borramos todas, no dejamos el chat roto
+        if (respuestaLimpia.isEmpty()) {
+            respuestaLimpia = "Me parece una respuesta excelente. Con todo lo que hemos hablado tengo información más que suficiente para valorar tu perfil. ¡Muchísimas gracias por tu tiempo! [FIN_ENTREVISTA]";
+        }
+
+        // --- 2. DETECTAR EL FIN DE LA ENTREVISTA ---
+        // --- 2. DETECTAR EL FIN DE LA ENTREVISTA Y EVALUAR ---
+        boolean entrevistaFinalizada = false;
+        if (respuestaLimpia.contains("[FIN_ENTREVISTA]")) {
+            entrevistaFinalizada = true;
+            // Le quitamos la etiqueta oculta
+            respuestaLimpia = respuestaLimpia.replace("[FIN_ENTREVISTA]", "").trim();
+            // Actualizamos el estado de la entrevista en la BD
+            entrevista.setEstado("FINALIZADA");
+
+            // --- MAGIA: EVALUACIÓN FINAL PARA LA EMPRESA ---
+            // Construimos el historial con la última respuesta limpia incluida
+            String historialCompleto = historialActualizado + "IA: " + respuestaLimpia;
+
+            String promptEvaluacionFinal = String.format(
+                    "Lee la siguiente entrevista técnica completa entre un candidato y un Tech Lead:\n%s\n\n" +
+                            "Actúa como un evaluador técnico. Analiza las respuestas del candidato y genera una evaluación final. " +
+                            "Tu respuesta DEBE tener EXACTAMENTE este formato y nada más:\n" +
+                            "MATCH: <número del 0 al 100>\n" +
+                            "RESUMEN: <resumen de 3 o 4 líneas sobre sus habilidades técnicas y comunicación>",
+                    historialCompleto
+            );
+
+            try {
+                // Hacemos una llamada extra a Gemini solo para extraer las notas
+                String evaluacionSilenciosa = geminiAIService.evaluarCandidato("Evaluación post-entrevista", promptEvaluacionFinal);
+
+                // Usamos Expresiones Regulares para extraer el número y el texto
+                String matchStr = evaluacionSilenciosa.replaceAll("(?is).*MATCH:\\s*(\\d+).*", "$1").trim();
+                String resumenStr = evaluacionSilenciosa.replaceAll("(?is).*RESUMEN:\\s*(.*)", "$1").trim();
+
+                // Sobrescribimos la Postulación con los datos definitivos tras la entrevista
+                Postulacion postulacion = entrevista.getPostulacion();
+                postulacion.setPorcentajeMatch(Double.parseDouble(matchStr));
+                postulacion.setResumenIa(resumenStr);
+
+                postulacionRepository.save(postulacion);
+            } catch (Exception e) {
+                System.err.println("Error al extraer la evaluación final de Gemini: " + e.getMessage());
+            }
+        }
+
+        // Guardamos el historial LIMPIO en la base de datos
+        historialActualizado = entrevista.getHistorialConversacion() + "Candidato: " + mensajeCandidato + "\nIA: " + respuestaLimpia + "\n";
         entrevista.setHistorialConversacion(historialActualizado);
 
         entrevistaRepository.save(entrevista);
 
-        return respuestaIa;
+        // --- 3. RESPONDER AL FRONTEND ---
+        if (entrevistaFinalizada) {
+            return "FINALIZADA|" + respuestaLimpia;
+        }
+
+        return respuestaLimpia;
     }
 
     public Optional<Entrevista> obtenerPorPostulacion(Long postulacionId) {
