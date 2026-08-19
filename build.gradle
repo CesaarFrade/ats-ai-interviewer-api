@@ -26,7 +26,7 @@ dependencies {
 	implementation 'org.apache.pdfbox:pdfbox:2.0.30'
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	implementation 'com.auth0:java-jwt:4.4.0'
-	implementation 'dev.langchain4j:langchain4j-google-ai-gemini-spring-boot-starter'
+	implementation 'dev.langchain4j:langchain4j-google-ai-gemini-spring-boot-starter:1.18.1-beta28'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql'
 	annotationProcessor 'org.projectlombok:lombok'

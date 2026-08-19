@@ -14,5 +14,19 @@ services:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
 
+  ats-backend:
+    build: .
+    container_name: ats-spring-boot
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres-db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres-db:5432/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+    restart: unless-stopped
+
 volumes:
   postgres_data:
