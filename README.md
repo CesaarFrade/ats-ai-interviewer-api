@@ -20,6 +20,7 @@ El proyecto está diseñado bajo una arquitectura desacoplada y basada en evento
 3. **Procesamiento de CVs:** Los candidatos suben su currículum en PDF; el backend extrae el texto automáticamente y lo asocia al perfil.
 4. **Matching por IA:** Al postularse, Gemini evalúa la oferta frente al texto crudo del CV, devolviendo un porcentaje de compatibilidad y un resumen analítico.
 5. **Entrevistas Técnicas Inteligentes (🤖 *Killer Feature*):** Las empresas pueden activar una entrevista para los mejores candidatos. El sistema abre una sala de chat donde Gemini, asumiendo el rol de Tech Lead, realiza preguntas técnicas en tiempo real. Al terminar, **la IA cierra la entrevista automáticamente y genera una evaluación final silenciosa** que actualiza la nota del candidato en el panel de la empresa.
+6. **Privacidad y Auditoría (NUEVO):** Los datos de contacto del candidato se mantienen ocultos bajo un candado de privacidad en el frontend hasta que la entrevista técnica finaliza. Una vez evaluado, la empresa puede acceder a los datos reales y abrir un modal de auditoría para leer la transcripción completa del chat entre la IA y el candidato.
 
 ## 🧪 Datos y Usuarios de Prueba
 Para facilitar las pruebas del sistema sin tener que registrar perfiles desde cero, el repositorio incluye una carpeta llamada `Usuarios de Prueba`. Dentro encontrarás:
@@ -34,18 +35,20 @@ Antes de ejecutar el proyecto, configura la siguiente variable en tu sistema o I
 
 ## 🚀 Cómo ejecutarlo en local
 
-### 1. El Backend (Spring Boot)
-1. Clona este repositorio y ábrelo en tu IDE (ej. IntelliJ IDEA).
-2. Configura tu `GEMINI_API_KEY` en los `application.properties` o variables de entorno.
-3. Ejecuta la aplicación Spring Boot desde la clase principal (`AtsApiApplication`). El servidor correrá en `http://localhost:8080`.
+El proyecto está diseñado con una arquitectura unificada donde el servidor embebido (Tomcat) sirve tanto la API REST como los recursos estáticos del Frontend, eliminando cualquier problema de CORS.
 
-### 2. El Frontend (Interfaz Web)
-El frontend se comunica con la API mediante peticiones asíncronas seguras:
-* **Opción A (Recomendada para desarrollo):** Abre la carpeta del frontend usando la extensión **Live Server** en VS Code para simular un servidor local en el puerto 5500.
-* **Opción B (Integrado):** Mueve los archivos HTML estáticos a la carpeta `src/main/resources/static/` del backend y accede vía `http://localhost:8080/login.html`.
-*(Nota: Evita abrir los HTML directamente con doble clic para no sufrir bloqueos de seguridad CORS `file://` del navegador).*
+### 1. Base de Datos (PostgreSQL vía Docker)
+El proyecto incluye un archivo `docker-compose.yml` para levantar la infraestructura de datos fácilmente. En la raíz del proyecto, ejecuta:
+> `docker-compose up -d`
+
+### 2. Backend + Frontend (Spring Boot)
+1. Clona este repositorio y ábrelo en tu IDE (ej. IntelliJ IDEA, VS Code).
+2. Configura tu `GEMINI_API_KEY` en `src/main/resources/application.properties`.
+3. Ejecuta la aplicación desde la clase principal (`AtsApiApplication.java`) o vía Maven.
+4. Abre tu navegador y accede directamente a: **`http://localhost:8080/login.html`**
 
 ## 📡 Endpoints Principales
 * **Autenticación:** `POST /api/auth/login` y `POST /api/auth/registro` (Control de tokens y roles).
 * **Ofertas:** `GET /api/ofertas` y `POST /api/ofertas` (Gestión para reclutadores).
-* **CVs:** `POST /api/cvs/upload` (Sube y extrae texto de PDFs de forma segura por usuario autenticado).
+* **CVs:** `POST /api/cvs/upload` (Sube y extrae texto de PDFs de forma segura).
+* **IA & Entrevistas:** `POST /api/entrevistas/iniciar/{id}` y `POST /api/entrevistas/chat/{id}` (Flujo de IA generativa y evaluación técnica).
