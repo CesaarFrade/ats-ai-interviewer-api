@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @SecurityRequirement(name = "Bearer Authentication")
-@RequestMapping("/api/candidatos") // La ruta base para todos los métodos de esta clase
+@RequestMapping("/api/candidatos")
 @RequiredArgsConstructor
 public class CandidatoController {
     private final ICandidatoService candidatoService;
@@ -33,6 +33,14 @@ public class CandidatoController {
     @GetMapping
     public ResponseEntity<List<CandidatoResponseDTO>> obtenerTodos() {
         return new ResponseEntity<>(candidatoService.getCandidatos(), HttpStatus.OK);
+    }
+
+    // GET: http://localhost:8080/api/candidatos/{id}
+    @GetMapping("/{id}")
+    @PreAuthorize("hasAuthority('ROLE_EMPRESA')")
+    public ResponseEntity<CandidatoResponseDTO> obtenerCandidatoPorId(@PathVariable Long id) {
+        CandidatoResponseDTO candidato = candidatoService.findCandidato(id);
+        return new ResponseEntity<>(candidato, HttpStatus.OK);
     }
 
     @GetMapping("/me")

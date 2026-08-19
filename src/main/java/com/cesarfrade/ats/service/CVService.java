@@ -20,7 +20,7 @@ public class CVService implements ICVService {
     private final CandidatoRepository candRepo;
     private final PdfExtractorService pdfExtractorService;
 
-    //Métodos CRUD
+    // Métodos CRUD
     @Override
     public CVResponseDTO findCV(Long id_CV) {
         CV cv = cvRepo.findById(id_CV).orElse(null);
@@ -94,7 +94,6 @@ public class CVService implements ICVService {
         // 1. Buscamos al candidato por su email en lugar de por ID
         Candidato candidato = candRepo.findByEmail(email).orElse(null);
         if (candidato == null) {
-            // Mensaje más claro para el usuario
             throw new NotFoundException("No se encontró ningún perfil de candidato asociado a este usuario.");
         }
 

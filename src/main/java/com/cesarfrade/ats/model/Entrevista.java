@@ -20,18 +20,17 @@ public class Entrevista {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Vinculamos la entrevista directamente con la postulación
     @OneToOne
     @JoinColumn(name = "postulacion_id", nullable = false)
     private Postulacion postulacion;
 
     @Column(columnDefinition = "TEXT")
-    private String historialConversacion; // Aquí guardaremos el hilo de mensajes del chat
+    private String historialConversacion;
 
-    private String estado; // EN_PROCESO, FINALIZADA
+    private String estado;
 
     private LocalDateTime fechaInicio;
 
     @Column(columnDefinition = "TEXT")
-    private String informeFinal; // Evaluación final que emite la IA al terminar
+    private String informeFinal;
 }

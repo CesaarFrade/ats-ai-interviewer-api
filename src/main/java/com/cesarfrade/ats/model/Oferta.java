@@ -5,7 +5,6 @@ import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "ofertas")
 @Getter
@@ -13,7 +12,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-
 public class Oferta {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -1,4 +1,4 @@
-package com.cesarfrade.ats.controller; // Ajusta tu paquete
+package com.cesarfrade.ats.controller;
 
 import com.cesarfrade.ats.dto.OfertaRequestDTO;
 import com.cesarfrade.ats.dto.OfertaResponseDTO;
@@ -24,8 +24,7 @@ public class OfertaController {
 
     private final IOfertaService ofertaService;
 
-    // POST: http://localhost:8080/api/ofertas
-    @PreAuthorize("hasAuthority('ROLE_EMPRESA')") // O hasRole según lo tengas en SecurityConfig
+    @PreAuthorize("hasAuthority('ROLE_EMPRESA')")
     @PostMapping
     public ResponseEntity<String> crearOferta(
             @Valid @RequestBody OfertaRequestDTO oferta,
@@ -40,7 +39,6 @@ public class OfertaController {
         return new ResponseEntity<>("¡Oferta guardada con éxito en la base de datos!", HttpStatus.CREATED);
     }
 
-    // GET: http://localhost:8080/api/ofertas
     @PreAuthorize("hasAuthority('ROLE_EMPRESA')")
     @GetMapping
     public ResponseEntity<List<OfertaResponseDTO>> obtenerMisOfertas(@AuthenticationPrincipal UserDetails userDetails) {
@@ -52,11 +50,10 @@ public class OfertaController {
         return new ResponseEntity<>(ofertaService.getOfertasByEmpresa(emailEmpresa), HttpStatus.OK);
     }
 
-    @PreAuthorize("hasAuthority('ROLE_CANDIDATO')") // Permitimos a los candidatos
+    @PreAuthorize("hasAuthority('ROLE_CANDIDATO')")
     @GetMapping("/todas")
     public ResponseEntity<List<OfertaResponseDTO>> obtenerTodasLasOfertas() {
         // Devuelve todas las ofertas activas de la base de datos
         return new ResponseEntity<>(ofertaService.getOfertas(), HttpStatus.OK);
     }
 }
-

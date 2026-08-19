@@ -10,7 +10,8 @@ import org.springframework.stereotype.Service;
 import java.util.Optional;
 
 @Service
-public class UsuarioService implements IUsuarioService{
+public class UsuarioService implements IUsuarioService {
+
     @Autowired
     private UsuarioRepository usuarioRepository;
 

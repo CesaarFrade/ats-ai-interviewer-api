@@ -25,7 +25,7 @@ public class PostulacionService implements IPostulacionService {
     private final CVRepository cvRepo;
     private final GeminiAIService aiService;
 
-    //Métodos CRUD
+    // Métodos CRUD
     @Override
     public PostulacionResponseDTO findPostulacion(Long id_Postulacion) {
         Postulacion postulacion = postRepo.findById(id_Postulacion).orElse(null);
@@ -47,7 +47,7 @@ public class PostulacionService implements IPostulacionService {
     @Override
     public void savePostulacion(PostulacionRequestDTO postulacionDTO) {
 
-        //  BUSCAMOS LOS DATOS BASE
+        // Buscamos los datos base
         Candidato candidato = candRepo.findById(postulacionDTO.getCandidatoId()).orElse(null);
         if (candidato == null) {
             throw new NotFoundException("No existe ningún candidato con el id indicado");
@@ -58,39 +58,39 @@ public class PostulacionService implements IPostulacionService {
             throw new NotFoundException("No existe ninguna oferta con el id indicado");
         }
 
-        // BUSCAMOS EL CV DEL CANDIDATO
+        // Buscamos el CV del candidato
         List<CV> listaCvs = cvRepo.findByCandidatoId(candidato.getId());
         if (listaCvs.isEmpty()) {
             throw new NotFoundException("El candidato no tiene ningún CV subido para evaluar.");
         }
         CV cvCandidato = listaCvs.get(0);
 
-        // LLAMADA A LA INTELIGENCIA ARTIFICIAL
+        // Llamada a la inteligencia artificial
         String respuestaIA = aiService.evaluarCandidato(oferta.getDescripcionPuesto(), cvCandidato.getTexto_crudo());
 
-        // TRADUCCIÓN RESPUESTA
+        // Traducción respuesta
         Double matchCalculado = 0.0;
         String resumenGenerado = "Error al leer IA";
 
         try {
             // Separamos la respuesta de la IA por líneas
             String[] lineas = respuestaIA.split("\n");
-            for(String linea : lineas) {
-                if(linea.toUpperCase().startsWith("MATCH:")) {
+            for (String linea : lineas) {
+                if (linea.toUpperCase().startsWith("MATCH:")) {
                     // Quitamos la palabra "MATCH:" y nos quedamos solo con el número
                     matchCalculado = Double.parseDouble(linea.replace("MATCH:", "").replace("%", "").trim());
                 }
-                if(linea.toUpperCase().startsWith("RESUMEN:")) {
+                if (linea.toUpperCase().startsWith("RESUMEN:")) {
                     // Nos quedamos con el texto del resumen
                     resumenGenerado = linea.substring(8).trim();
                 }
             }
         } catch (Exception e) {
             System.err.println("La IA respondió con un formato inesperado: " + respuestaIA);
-            resumenGenerado = respuestaIA; // Si falla, guardamos todo el texto crudo para no perderlo
+            resumenGenerado = respuestaIA;
         }
 
-        // GUARDAMOS TODO EN LA BASE DE DATOS
+        // Guardamos todo en la base de datos
         Postulacion postulacion = Postulacion.builder()
                 .candidato(candidato)
                 .oferta(oferta)
@@ -100,7 +100,6 @@ public class PostulacionService implements IPostulacionService {
 
         postRepo.save(postulacion);
     }
-
 
     @Override
     public void deletePostulacion(Long id_postulacion) {

@@ -4,9 +4,9 @@ import com.cesarfrade.ats.dto.OfertaRequestDTO;
 import com.cesarfrade.ats.dto.OfertaResponseDTO;
 import com.cesarfrade.ats.exception.NotFoundException;
 import com.cesarfrade.ats.model.Oferta;
-import com.cesarfrade.ats.model.Usuario; // IMPORTANTE
+import com.cesarfrade.ats.model.Usuario;
 import com.cesarfrade.ats.repository.OfertaRepository;
-import com.cesarfrade.ats.repository.UsuarioRepository; // IMPORTANTE
+import com.cesarfrade.ats.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,9 +17,9 @@ import java.util.List;
 public class OfertaService implements IOfertaService {
 
     private final OfertaRepository ofeRepo;
-    private final UsuarioRepository usuarioRepository; // Añadimos el repositorio de usuario
+    private final UsuarioRepository usuarioRepository;
 
-    //Métodos CRUD
+    // Métodos CRUD
     @Override
     public OfertaResponseDTO findOferta(Long id_oferta) {
         Oferta oferta = ofeRepo.findById(id_oferta).orElse(null);
@@ -30,7 +30,7 @@ public class OfertaService implements IOfertaService {
         }
     }
 
-    // Mantenemos este por si los candidatos necesitan ver TODAS las ofertas de todas las empresas
+    // Candidatos necesitan ver TODAS las ofertas de todas las empresas
     @Override
     public List<OfertaResponseDTO> getOfertas() {
         return ofeRepo.findAll().stream()
@@ -55,7 +55,7 @@ public class OfertaService implements IOfertaService {
                 .titulo(ofertaDTO.getTitulo())
                 .descripcionPuesto(ofertaDTO.getDescripcionPuesto())
                 .activa(ofertaDTO.isActiva())
-                .creador(creador) // ¡ASIGNAMOS LA EMPRESA AQUÍ!
+                .creador(creador)
                 .build();
 
         ofeRepo.save(oferta);

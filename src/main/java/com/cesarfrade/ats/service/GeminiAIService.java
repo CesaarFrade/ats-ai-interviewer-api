@@ -17,7 +17,6 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class GeminiAIService {
 
-    // Extraemos las variables application.yml
     @Value("${gemini.api.key}")
     private String apiKey;
 
@@ -27,6 +26,7 @@ public class GeminiAIService {
     // Herramientas de Spring Boot para hacer peticiones HTTP y leer JSON
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+
     public String evaluarCandidato(String descripcionOferta, String textoCv) {
 
         // 1. Diseñamos el Prompt

@@ -19,7 +19,6 @@ public class EntrevistaService {
     private final PostulacionRepository postulacionRepository;
     private final GeminiAIService geminiAIService;
 
-    // 1. Iniciar la entrevista para una postulación
     public Entrevista iniciarEntrevista(Long postulacionId) {
         Postulacion postulacion = postulacionRepository.findById(postulacionId)
                 .orElseThrow(() -> new NotFoundException("Postulación no encontrada"));
@@ -42,7 +41,7 @@ public class EntrevistaService {
 
             String respuestaCrudaIa = geminiAIService.evaluarCandidato(promptInicial, "Inicio de entrevista técnica.");
 
-            // LIMPIEZA EXTREMA DEL SALUDO INICIAL (Por si acaso la IA desobedece desde el principio)
+            // LIMPIEZA EXTREMA DEL SALUDO INICIAL
             String respuestaLimpia = respuestaCrudaIa.replaceAll("(?i)MATCH:.*", "")
                     .replaceAll("(?is)RESUMEN:.*?(?=\n\n|$)", "")
                     .trim();
@@ -58,7 +57,6 @@ public class EntrevistaService {
         });
     }
 
-    // 2. Enviar respuesta del candidato y obtener la réplica de la IA
     public String enviarMensaje(Long entrevistaId, String mensajeCandidato) {
         Entrevista entrevista = entrevistaRepository.findById(entrevistaId)
                 .orElseThrow(() -> new NotFoundException("Entrevista no encontrada"));
@@ -83,12 +81,11 @@ public class EntrevistaService {
                 .replaceAll("(?is)RESUMEN:.*?(?=\n\n|$)", "")
                 .trim();
 
-        // SALVAVIDAS: Si la IA solo generó notas internas y las borramos todas, no dejamos el chat roto
+        // Si la IA solo generó notas internas y las borramos todas, no dejamos el chat roto
         if (respuestaLimpia.isEmpty()) {
             respuestaLimpia = "Me parece una respuesta excelente. Con todo lo que hemos hablado tengo información más que suficiente para valorar tu perfil. ¡Muchísimas gracias por tu tiempo! [FIN_ENTREVISTA]";
         }
 
-        // --- 2. DETECTAR EL FIN DE LA ENTREVISTA ---
         // --- 2. DETECTAR EL FIN DE LA ENTREVISTA Y EVALUAR ---
         boolean entrevistaFinalizada = false;
         if (respuestaLimpia.contains("[FIN_ENTREVISTA]")) {
@@ -98,7 +95,6 @@ public class EntrevistaService {
             // Actualizamos el estado de la entrevista en la BD
             entrevista.setEstado("FINALIZADA");
 
-            // --- MAGIA: EVALUACIÓN FINAL PARA LA EMPRESA ---
             // Construimos el historial con la última respuesta limpia incluida
             String historialCompleto = historialActualizado + "IA: " + respuestaLimpia;
 
@@ -112,7 +108,6 @@ public class EntrevistaService {
             );
 
             try {
-                // Hacemos una llamada extra a Gemini solo para extraer las notas
                 String evaluacionSilenciosa = geminiAIService.evaluarCandidato("Evaluación post-entrevista", promptEvaluacionFinal);
 
                 // Usamos Expresiones Regulares para extraer el número y el texto

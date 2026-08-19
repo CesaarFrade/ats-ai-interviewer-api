@@ -9,9 +9,7 @@ import java.io.IOException;
 
 @Service
 public class PdfExtractorService {
-    /**
-     * Recibe un archivo web (MultipartFile) y devuelve todo su texto plano.
-     */
+
     public String extraerTextoPdf(MultipartFile archivoPdf) {
         // PDDocument.load lee el flujo de datos del archivo directamente desde la memoria
         try (PDDocument documento = PDDocument.load(archivoPdf.getInputStream())) {

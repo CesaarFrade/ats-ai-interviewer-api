@@ -17,7 +17,7 @@ import java.util.List;
 
 @RestController
 @SecurityRequirement(name = "Bearer Authentication")
-@RequestMapping("/api/postulaciones") // La ruta base para todos los métodos de esta clase
+@RequestMapping("/api/postulaciones")
 @RequiredArgsConstructor
 public class PostulacionController {
     private final IPostulacionService postulacionService;
@@ -59,4 +59,3 @@ public class PostulacionController {
         return ResponseEntity.ok(postulaciones);
     }
 }
-

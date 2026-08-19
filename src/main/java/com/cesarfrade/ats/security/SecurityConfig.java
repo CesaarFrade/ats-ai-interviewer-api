@@ -41,7 +41,10 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/api/candidatos/me").hasRole("CANDIDATO") // O hasAnyRole según manejes los prefijos
+
+                        .requestMatchers("/*.html", "/*.css", "/*.js", "/assets/**", "/images/**").permitAll()
+
+                        .requestMatchers("/api/candidatos/me").hasRole("CANDIDATO")
                         .requestMatchers("/api/entrevistas/**").authenticated()
                         .requestMatchers("/api/postulaciones/**").authenticated()
                         .anyRequest().authenticated()
@@ -54,12 +57,12 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(Arrays.asList("*")); // Permite cualquier origen (tu frontend)
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS")); // ¡Permite OPTIONS!
-        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type")); // Permite tus cabeceras
+        configuration.setAllowedOrigins(Arrays.asList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type"));
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration); // Aplica a todas las rutas
+        source.registerCorsConfiguration("/**", configuration);
         return source;
     }
 }

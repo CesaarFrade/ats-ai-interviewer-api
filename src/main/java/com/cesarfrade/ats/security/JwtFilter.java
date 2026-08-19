@@ -28,16 +28,16 @@ public class JwtFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        // 1. Miramos si la petición trae la cabecera Authorization
+        // Miramos si la petición trae la cabecera Authorization
         String authHeader = request.getHeader("Authorization");
 
-        // 2. Comprobamos que el token exista y empiece por "Bearer "
+        // Comprobamos que el token exista y empiece por "Bearer "
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
 
-            String jwt = authHeader.substring(7); // Extraemos solo el token
-            String email = jwtUtil.validarTokenYObtenerEmail(jwt); // Validamos que no sea falso
+            String jwt = authHeader.substring(7);
+            String email = jwtUtil.validarTokenYObtenerEmail(jwt);
 
-            // 3. Si el token es real y el usuario no está ya logueado...
+            // Si el token es real y el usuario no está ya logueado...
             if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
 
                 try {
@@ -51,7 +51,7 @@ public class JwtFilter extends OncePerRequestFilter {
                             userDetails.getAuthorities()
                     );
 
-                    // Le ponemos la pulsera VIP en el contexto de seguridad
+                    // VIP en el contexto de seguridad
                     SecurityContextHolder.getContext().setAuthentication(authToken);
 
                 } catch (Exception e) {
@@ -61,7 +61,7 @@ public class JwtFilter extends OncePerRequestFilter {
             }
         }
 
-        // 4. Dejamos que la petición siga su camino
+        // Dejamos que la petición siga su camino
         filterChain.doFilter(request, response);
     }
 }

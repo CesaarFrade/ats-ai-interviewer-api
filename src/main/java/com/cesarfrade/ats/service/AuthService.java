@@ -42,8 +42,8 @@ public class AuthService {
         if (dto.getRol() == Rol.ROLE_CANDIDATO) {
             Candidato perfilCandidato = Candidato.builder()
                     .email(dto.getEmail())
-                    .nombreCandidato(dto.getNombreCandidato()) // <-- ¡Guardamos el nombre!
-                    .telefono(dto.getTelefono())               // <-- ¡Guardamos el teléfono!
+                    .nombreCandidato(dto.getNombreCandidato())
+                    .telefono(dto.getTelefono())
                     .build();
             candidatoService.guardarCandidatoInterno(perfilCandidato);
         }
@@ -52,7 +52,6 @@ public class AuthService {
     }
 
     public String login(LoginDTO dto) {
-        // Usamos el servicio
         Usuario usuario = usuarioService.buscarPorEmail(dto.getEmail())
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
 

@@ -21,12 +21,12 @@ import java.util.List;
 @RestController
 @SecurityRequirement(name = "Bearer Authentication")
 @CrossOrigin(origins = "*")
-@RequestMapping("/api/cvs") // La ruta base para todos los métodos de esta clase
+@RequestMapping("/api/cvs")
 @RequiredArgsConstructor
 public class CVController {
     private final ICVService cvService;
 
-    // POST: http://localhost:8080/api/cvs
+    // POST: /api/cvs
     @PostMapping
     public ResponseEntity<String> crearCV(@Valid @RequestBody CVRequestDTO cv) {
         cvService.saveCV(cv);

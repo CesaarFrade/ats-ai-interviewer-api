@@ -15,7 +15,7 @@ import java.util.List;
 public class CandidatoService implements ICandidatoService {
     private final CandidatoRepository candRepo;
 
-    //Métodos CRUD
+    // Métodos CRUD
     @Override
     public CandidatoResponseDTO findCandidato(Long id_candidato) {
         Candidato candidato = candRepo.findById(id_candidato).orElse(null);
@@ -46,7 +46,7 @@ public class CandidatoService implements ICandidatoService {
 
     @Override
     public Candidato guardarCandidatoInterno(Candidato candidato) {
-        return candRepo.save(candidato); // o candRepo.save(...) dependiendo de cómo lo llames
+        return candRepo.save(candidato);
     }
 
     @Override

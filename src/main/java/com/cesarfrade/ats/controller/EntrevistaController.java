@@ -7,12 +7,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map; // <-- Importante
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/entrevistas")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // <-- ¡FUNDAMENTAL PARA QUE EL FRONTEND PUEDA ENVIAR EL MENSAJE!
+@CrossOrigin(origins = "*")
 public class EntrevistaController {
 
     private final EntrevistaService entrevistaService;
@@ -24,11 +24,9 @@ public class EntrevistaController {
         return ResponseEntity.ok(entrevista);
     }
 
-    // EL ENDPOINT QUE FALLABA
     @PostMapping("/{entrevistaId}/mensaje")
     @PreAuthorize("hasAnyAuthority('ROLE_CANDIDATO')")
     public ResponseEntity<String> enviarMensaje(@PathVariable Long entrevistaId, @RequestBody Map<String, String> payload) {
-        // Recibimos un JSON y extraemos el texto
         String mensaje = payload.get("mensaje");
         String respuestaIa = entrevistaService.enviarMensaje(entrevistaId, mensaje);
         return ResponseEntity.ok(respuestaIa);
